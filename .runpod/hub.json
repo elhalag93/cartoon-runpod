@@ -96,6 +96,27 @@
             "default": 7.5,
             "description": "Guidance scale for animation"
           },
+          "tts_guidance_scale": {
+            "type": "number",
+            "minimum": 1.0,
+            "maximum": 10.0,
+            "default": 3.0,
+            "description": "Guidance scale for TTS generation"
+          },
+          "temperature": {
+            "type": "number",
+            "minimum": 0.1,
+            "maximum": 2.0,
+            "default": 1.8,
+            "description": "Temperature for TTS sampling"
+          },
+          "max_new_tokens": {
+            "type": "integer",
+            "minimum": 512,
+            "maximum": 4096,
+            "default": 3072,
+            "description": "Maximum tokens for TTS generation"
+          },
           "num_inference_steps": {
             "type": "integer",
             "minimum": 10,

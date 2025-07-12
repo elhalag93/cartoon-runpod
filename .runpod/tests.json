@@ -22,7 +22,7 @@
         "task_type": "tts",
         "dialogue_text": "[S1] Hello from the moon! [S2] This is a test of the TTS system.",
         "max_new_tokens": 1024,
-        "guidance_scale": 3.0,
+        "tts_guidance_scale": 3.0,
         "temperature": 1.8,
         "top_p": 0.9,
         "top_k": 45,

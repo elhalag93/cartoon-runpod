@@ -1,15 +1,22 @@
 """
-RunPod Worker for Cartoon Animation Generation
-Combines Dia TTS and AnimateDiff for character animations
+RunPod Serverless Handler for Cartoon Animation Generation
+Combines Dia TTS and AnimateDiff for character animations with voice
+
+This handler follows RunPod serverless best practices:
+- Proper error handling and validation
+- Memory management and optimization
+- Base64 encoded outputs for file transfer
+- Comprehensive logging and monitoring
 """
 
-import io
 import os
+import gc
 import time
 import json
-import tempfile
 import base64
-from typing import Dict, Any, Optional, List
+import tempfile
+import traceback
+from typing import Dict, Any, Optional, Union
 from pathlib import Path
 
 import runpod
@@ -17,13 +24,11 @@ import torch
 import numpy as np
 import soundfile as sf
 from PIL import Image
-from diffusers import AnimateDiffSDXLPipeline, MotionAdapter, DDIMScheduler, ControlNetModel, StableDiffusionControlNetPipeline
+from diffusers import AnimateDiffSDXLPipeline, MotionAdapter, DDIMScheduler
 from diffusers.utils import export_to_video, export_to_gif
 from transformers import AutoProcessor, DiaForConditionalGeneration
-import cv2
-import openpose_pytorch as openpose
 
-# Global variables for models
+# Global model instances - loaded once and reused
 dia_model = None
 dia_processor = None
 animation_pipeline = None
@@ -35,34 +40,60 @@ LORA_DIR = Path("/workspace/lora_models")
 OUTPUT_DIR = Path("/workspace/outputs")
 TEMP_DIR = Path("/workspace/temp")
 
-# Model paths
-SDXL_MODEL_PATH = str(MODELS_DIR / "sdxl-turbo")
-MOTION_ADAPTER_PATH = str(MODELS_DIR / "animatediff" / "motion_adapter")
+# Model configuration
 DIA_MODEL_CHECKPOINT = "nari-labs/Dia-1.6B-0626"
+SDXL_MODEL_ID = "stabilityai/sdxl-turbo"
+MOTION_ADAPTER_ID = "animatediff/animatediff-motion-adapter-v1"
+
+# Supported characters
+SUPPORTED_CHARACTERS = ["temo", "felfel"]
 
 def setup_directories():
     """Ensure all required directories exist"""
-    for directory in [OUTPUT_DIR, TEMP_DIR]:
+    for directory in [MODELS_DIR, LORA_DIR, OUTPUT_DIR, TEMP_DIR]:
         directory.mkdir(parents=True, exist_ok=True)
 
 def clear_memory():
-    """Clear GPU memory"""
+    """Clear GPU memory and run garbage collection"""
+    gc.collect()
     if torch.cuda.is_available():
         torch.cuda.empty_cache()
         torch.cuda.synchronize()
 
+def get_memory_usage() -> Dict[str, float]:
+    """Get current GPU memory usage"""
+    if torch.cuda.is_available():
+        allocated = torch.cuda.memory_allocated() / 1024**3
+        reserved = torch.cuda.memory_reserved() / 1024**3
+        total = torch.cuda.get_device_properties(0).total_memory / 1024**3
+        return {
+            "allocated_gb": round(allocated, 2),
+            "reserved_gb": round(reserved, 2),
+            "total_gb": round(total, 2),
+            "free_gb": round(total - allocated, 2)
+        }
+    return {"allocated_gb": 0, "reserved_gb": 0, "total_gb": 0, "free_gb": 0}
+
 def load_tts_model():
-    """Load TTS model and processor"""
+    """Load Dia TTS model and processor"""
     global dia_model, dia_processor
     
-    if dia_model is None:
+    if dia_model is None or dia_processor is None:
         print("🔄 Loading Dia TTS model...")
         device = "cuda" if torch.cuda.is_available() else "cpu"
         
         try:
             dia_processor = AutoProcessor.from_pretrained(DIA_MODEL_CHECKPOINT)
-            dia_model = DiaForConditionalGeneration.from_pretrained(DIA_MODEL_CHECKPOINT).to(device)
-            print("✅ Dia TTS model loaded")
+            dia_model = DiaForConditionalGeneration.from_pretrained(
+                DIA_MODEL_CHECKPOINT,
+                torch_dtype=torch.float16 if device == "cuda" else torch.float32,
+                device_map="auto" if device == "cuda" else None
+            )
+            
+            if device != "cuda":
+                dia_model = dia_model.to(device)
+            
+            print("✅ Dia TTS model loaded successfully")
         except Exception as e:
             print(f"❌ Error loading TTS model: {e}")
             raise
@@ -70,7 +101,7 @@ def load_tts_model():
     return dia_model, dia_processor
 
 def load_animation_pipeline():
-    """Load animation pipeline"""
+    """Load AnimateDiff pipeline with SDXL"""
     global animation_pipeline, motion_adapter
     
     if animation_pipeline is None:
@@ -80,28 +111,22 @@ def load_animation_pipeline():
         try:
             # Load motion adapter
             motion_adapter = MotionAdapter.from_pretrained(
-                "animatediff/animatediff-motion-adapter-v1",
+                MOTION_ADAPTER_ID,
                 torch_dtype=torch.float16 if device == "cuda" else torch.float32
             )
             
             # Load pipeline
             animation_pipeline = AnimateDiffSDXLPipeline.from_pretrained(
-                "stabilityai/sdxl-turbo",
+                SDXL_MODEL_ID,
                 motion_adapter=motion_adapter,
                 torch_dtype=torch.float16 if device == "cuda" else torch.float32,
-                variant="fp16" if device == "cuda" else None
+                variant="fp16" if device == "cuda" else None,
+                use_safetensors=True
             )
             
             animation_pipeline = animation_pipeline.to(device)
             
-            # Enable memory optimizations
-            if device == "cuda":
-                animation_pipeline.enable_sequential_cpu_offload()
-                animation_pipeline.enable_attention_slicing()
-                animation_pipeline.enable_vae_slicing()
-                animation_pipeline.enable_vae_tiling()
-            
-            # Set scheduler
+            # Configure scheduler
             animation_pipeline.scheduler = DDIMScheduler.from_config(
                 animation_pipeline.scheduler.config,
                 beta_schedule="linear",
@@ -109,33 +134,48 @@ def load_animation_pipeline():
                 clip_sample=False
             )
             
-            print("✅ AnimateDiff pipeline loaded")
+            # Enable memory optimizations
+            if device == "cuda":
+                animation_pipeline.enable_sequential_cpu_offload()
+                animation_pipeline.enable_attention_slicing()
+                animation_pipeline.enable_vae_slicing()
+                animation_pipeline.enable_vae_tiling()
+                
+                # Try to enable xformers if available
+                try:
+                    animation_pipeline.enable_xformers_memory_efficient_attention()
+                    print("✅ xFormers memory efficient attention enabled")
+                except Exception:
+                    print("⚠️ xFormers not available, using default attention")
+            
+            print("✅ AnimateDiff pipeline loaded successfully")
         except Exception as e:
             print(f"❌ Error loading animation pipeline: {e}")
             raise
     
     return animation_pipeline
 
-def load_controlnet_pose_model():
-    """Load ControlNet pose model"""
-    controlnet_path = os.path.join("models", "controlnet", "controlnet_pose.pth")
-    if not os.path.exists(controlnet_path):
-        raise FileNotFoundError(f"ControlNet pose model not found at {controlnet_path}")
-    controlnet = ControlNetModel.from_pretrained(controlnet_path, torch_dtype=torch.float16 if torch.cuda.is_available() else torch.float32)
-    return controlnet
-
-def extract_pose_map(image: np.ndarray) -> np.ndarray:
-    """Extract pose map from an image using OpenPose"""
-    # Convert to RGB if needed
-    if image.shape[-1] == 4:
-        image = cv2.cvtColor(image, cv2.COLOR_BGRA2BGR)
-    elif image.shape[-1] == 1:
-        image = cv2.cvtColor(image, cv2.COLOR_GRAY2BGR)
-    # Use OpenPose to extract pose
-    pose_map = openpose.infer(image)
-    # Convert pose map to uint8 for ControlNet
-    pose_map = (pose_map * 255).astype(np.uint8)
-    return pose_map
+def load_lora_weights(pipeline, character: str):
+    """Load LoRA weights for specific character"""
+    try:
+        # Unload any existing LoRA weights
+        pipeline.unload_lora_weights()
+        clear_memory()
+        
+        # Load character-specific LoRA
+        lora_path = LORA_DIR / f"{character}_lora"
+        if not lora_path.exists():
+            raise FileNotFoundError(f"LoRA weights not found for character '{character}' at {lora_path}")
+        
+        pipeline.load_lora_weights(
+            str(lora_path),
+            weight_name="deep_sdxl_turbo_lora_weights.pt"
+        )
+        
+        print(f"✅ LoRA weights loaded for character: {character}")
+    except Exception as e:
+        print(f"❌ Error loading LoRA weights for {character}: {e}")
+        raise
 
 def encode_file_to_base64(file_path: str) -> str:
     """Encode file to base64 string"""
@@ -143,32 +183,87 @@ def encode_file_to_base64(file_path: str) -> str:
         with open(file_path, "rb") as f:
             return base64.b64encode(f.read()).decode("utf-8")
     except Exception as e:
-        print(f"Error encoding file {file_path}: {e}")
+        print(f"❌ Error encoding file {file_path}: {e}")
         return ""
+
+def validate_input(input_data: Dict[str, Any]) -> Dict[str, Any]:
+    """Validate and sanitize input parameters"""
+    validated = {}
+    
+    # Task type validation
+    task_type = input_data.get("task_type", "animation")
+    if task_type not in ["animation", "tts", "combined"]:
+        raise ValueError(f"Invalid task_type: {task_type}. Must be 'animation', 'tts', or 'combined'")
+    validated["task_type"] = task_type
+    
+    # Character validation (for animation tasks)
+    if task_type in ["animation", "combined"]:
+        character = input_data.get("character", "temo")
+        if character not in SUPPORTED_CHARACTERS:
+            raise ValueError(f"Invalid character: {character}. Must be one of {SUPPORTED_CHARACTERS}")
+        validated["character"] = character
+        
+        # Prompt validation
+        prompt = input_data.get("prompt", "")
+        if not prompt:
+            validated["prompt"] = f"{character} character in cartoon style"
+        else:
+            validated["prompt"] = str(prompt)[:500]  # Limit prompt length
+    
+    # TTS validation (for tts tasks)
+    if task_type in ["tts", "combined"]:
+        dialogue_text = input_data.get("dialogue_text", "")
+        if not dialogue_text:
+            raise ValueError("dialogue_text is required for TTS generation")
+        validated["dialogue_text"] = str(dialogue_text)[:1000]  # Limit text length
+    
+    # Animation parameters
+    if task_type in ["animation", "combined"]:
+        validated["num_frames"] = max(4, min(32, input_data.get("num_frames", 16)))
+        validated["fps"] = max(4, min(12, input_data.get("fps", 8)))
+        validated["width"] = max(256, min(768, input_data.get("width", 512)))
+        validated["height"] = max(256, min(768, input_data.get("height", 512)))
+        validated["guidance_scale"] = max(1.0, min(15.0, input_data.get("guidance_scale", 7.5)))
+        validated["num_inference_steps"] = max(5, min(30, input_data.get("num_inference_steps", 15)))
+        validated["negative_prompt"] = input_data.get("negative_prompt", "blurry, low quality, distorted")
+    
+    # TTS parameters
+    if task_type in ["tts", "combined"]:
+        validated["max_new_tokens"] = max(512, min(4096, input_data.get("max_new_tokens", 3072)))
+        validated["tts_guidance_scale"] = max(1.0, min(10.0, input_data.get("tts_guidance_scale", 3.0)))
+        validated["temperature"] = max(0.1, min(2.0, input_data.get("temperature", 1.8)))
+        validated["top_p"] = max(0.1, min(1.0, input_data.get("top_p", 0.9)))
+        validated["top_k"] = max(1, min(100, input_data.get("top_k", 45)))
+    
+    # Seed handling
+    seed = input_data.get("seed")
+    if seed is not None:
+        validated["seed"] = int(seed)
+    else:
+        validated["seed"] = torch.randint(0, 1000000, (1,)).item()
+    
+    return validated
 
 def generate_tts(
     dialogue_text: str,
     max_new_tokens: int = 3072,
-    guidance_scale: float = 3.0,
+    tts_guidance_scale: float = 3.0,
     temperature: float = 1.8,
     top_p: float = 0.9,
     top_k: int = 45,
-    seed: Optional[int] = None,
+    seed: int = 42,
     **kwargs
 ) -> Dict[str, Any]:
-    """Generate TTS audio"""
+    """Generate TTS audio from text"""
     
-    # Load TTS model if not loaded
+    # Load TTS model
     model, processor = load_tts_model()
     
     print(f"🎵 Generating TTS for: {dialogue_text[:50]}...")
     
     device = "cuda" if torch.cuda.is_available() else "cpu"
     
-    # Set seed
-    if seed is None:
-        seed = torch.randint(0, 1000000, (1,)).item()
-    
+    # Set seed for reproducibility
     torch.manual_seed(seed)
     if torch.cuda.is_available():
         torch.cuda.manual_seed(seed)
@@ -182,7 +277,7 @@ def generate_tts(
             outputs = model.generate(
                 **inputs,
                 max_new_tokens=max_new_tokens,
-                guidance_scale=guidance_scale,
+                guidance_scale=tts_guidance_scale,
                 temperature=temperature,
                 top_p=top_p,
                 top_k=top_k
@@ -197,8 +292,8 @@ def generate_tts(
         
         # Save the first audio array
         if audio_arrays and len(audio_arrays) > 0:
-            # Assuming the processor returns audio data that can be saved
-            sf.write(str(audio_path), audio_arrays[0], 44100)
+            # Save audio using processor's save method
+            processor.save_audio(audio_arrays, str(audio_path))
         
         clear_memory()
         
@@ -212,50 +307,100 @@ def generate_tts(
         print(f"❌ Error generating TTS: {e}")
         raise
 
-def generate_combined(
+def generate_animation(
     character: str,
     prompt: str,
-    dialogue_text: str,
     num_frames: int = 16,
     fps: int = 8,
     width: int = 512,
     height: int = 512,
     guidance_scale: float = 7.5,
     num_inference_steps: int = 15,
-    max_new_tokens: int = 3072,
-    tts_guidance_scale: float = 3.0,
-    temperature: float = 1.8,
-    seed: Optional[int] = None,
+    negative_prompt: str = "blurry, low quality, distorted",
+    seed: int = 42,
+    **kwargs
+) -> Dict[str, Any]:
+    """Generate character animation"""
+    
+    # Load animation pipeline
+    pipeline = load_animation_pipeline()
+    
+    # Load character LoRA weights
+    load_lora_weights(pipeline, character)
+    
+    print(f"🎬 Generating animation for {character}: {prompt[:50]}...")
+    
+    device = "cuda" if torch.cuda.is_available() else "cpu"
+    generator = torch.Generator(device).manual_seed(seed)
+    
+    try:
+        # Generate animation
+        result = pipeline(
+            prompt=prompt,
+            negative_prompt=negative_prompt,
+            num_frames=num_frames,
+            guidance_scale=guidance_scale,
+            num_inference_steps=num_inference_steps,
+            height=height,
+            width=width,
+            generator=generator
+        )
+        
+        frames = result.frames[0]
+        
+        # Save outputs
+        timestamp = int(time.time())
+        gif_path = OUTPUT_DIR / f"{character}_animation_{timestamp}.gif"
+        mp4_path = OUTPUT_DIR / f"{character}_animation_{timestamp}.mp4"
+        
+        # Export to files
+        export_to_gif(frames, str(gif_path), fps=fps)
+        export_to_video(frames, str(mp4_path), fps=fps)
+        
+        clear_memory()
+        
+        return {
+            "gif_path": str(gif_path),
+            "mp4_path": str(mp4_path),
+            "seed": seed,
+            "character": character,
+            "prompt": prompt
+        }
+        
+    except Exception as e:
+        print(f"❌ Error generating animation: {e}")
+        raise
+
+def generate_combined(
+    character: str,
+    prompt: str,
+    dialogue_text: str,
     **kwargs
 ) -> Dict[str, Any]:
     """Generate combined animation and TTS"""
     
     print(f"🎬🎵 Generating combined animation + TTS for {character}")
     
-    # Set seed
-    if seed is None:
-        seed = torch.randint(0, 1000000, (1,)).item()
+    # Extract parameters for each task
+    animation_params = {k: v for k, v in kwargs.items() 
+                       if k in ["num_frames", "fps", "width", "height", "guidance_scale", 
+                               "num_inference_steps", "negative_prompt", "seed"]}
+    
+    tts_params = {k: v for k, v in kwargs.items() 
+                  if k in ["max_new_tokens", "tts_guidance_scale", "temperature", 
+                          "top_p", "top_k", "seed"]}
     
     # Generate animation
     animation_result = generate_animation(
         character=character,
         prompt=prompt,
-        num_frames=num_frames,
-        fps=fps,
-        width=width,
-        height=height,
-        guidance_scale=guidance_scale,
-        num_inference_steps=num_inference_steps,
-        seed=seed
+        **animation_params
     )
     
     # Generate TTS
     tts_result = generate_tts(
         dialogue_text=dialogue_text,
-        max_new_tokens=max_new_tokens,
-        guidance_scale=tts_guidance_scale,
-        temperature=temperature,
-        seed=seed
+        **tts_params
     )
     
     # Combine results
@@ -268,29 +413,52 @@ def generate_combined(
     return combined_result
 
 def handler(job: Dict[str, Any]) -> Dict[str, Any]:
-    """RunPod handler for animation generation"""
+    """
+    RunPod serverless handler function
+    
+    Args:
+        job: Job dictionary containing 'input' with generation parameters
+        
+    Returns:
+        Dictionary with generation results or error information
+    """
+    
+    start_time = time.time()
+    
     try:
-        # Extract input parameters
-        input_data = job.get("input", {})
-        task_type = input_data.get("task_type", "animation")
-        
-        print(f"🎬 Starting {task_type} generation...")
-        
         # Setup directories
         setup_directories()
         
+        # Extract and validate input
+        input_data = job.get("input", {})
+        if not input_data:
+            return {"error": "No input data provided"}
+        
+        # Validate input parameters
+        validated_input = validate_input(input_data)
+        task_type = validated_input["task_type"]
+        
+        print(f"🚀 Starting {task_type} generation with validated input")
+        
+        # Route to appropriate generation function
         if task_type == "animation":
-            result = generate_animation(**input_data)
+            result = generate_animation(**validated_input)
         elif task_type == "tts":
-            result = generate_tts(**input_data)
+            result = generate_tts(**validated_input)
         elif task_type == "combined":
-            result = generate_combined(**input_data)
+            result = generate_combined(**validated_input)
         else:
-            raise ValueError(f"Unknown task_type: {task_type}")
+            return {"error": f"Unknown task_type: {task_type}"}
         
-        # Encode files to base64 for download
-        response = {"task_type": task_type}
+        # Prepare response with base64 encoded files
+        response = {
+            "task_type": task_type,
+            "seed": result.get("seed"),
+            "generation_time": round(time.time() - start_time, 2),
+            "memory_usage": get_memory_usage()
+        }
         
+        # Encode files to base64
         if "gif_path" in result:
             response["gif"] = encode_file_to_base64(result["gif_path"])
             response["gif_path"] = result["gif_path"]
@@ -303,119 +471,46 @@ def handler(job: Dict[str, Any]) -> Dict[str, Any]:
             response["audio"] = encode_file_to_base64(result["audio_path"])
             response["audio_path"] = result["audio_path"]
         
-        response["seed"] = result.get("seed")
+        # Add metadata
+        if "character" in result:
+            response["character"] = result["character"]
+        if "prompt" in result:
+            response["prompt"] = result["prompt"]
+        if "dialogue_text" in result:
+            response["dialogue_text"] = result["dialogue_text"]
         
-        # Clean up files after encoding
+        # Clean up temporary files
         for path_key in ["gif_path", "mp4_path", "audio_path"]:
             if path_key in result:
                 try:
                     os.remove(result[path_key])
-                except:
-                    pass
+                except Exception:
+                    pass  # Ignore cleanup errors
         
-        # Memory usage info
-        if torch.cuda.is_available():
-            allocated = torch.cuda.memory_allocated() / 1024**3
-            total = torch.cuda.get_device_properties(0).total_memory / 1024**3
-            response["memory_usage"] = {
-                "allocated_gb": round(allocated, 2),
-                "total_gb": round(total, 2)
-            }
-        
+        print(f"✅ {task_type} generation completed in {response['generation_time']}s")
         return response
         
     except Exception as e:
-        error_msg = f"Error in handler: {str(e)}"
+        error_msg = f"Error in {task_type if 'task_type' in locals() else 'unknown'} generation: {str(e)}"
         print(f"❌ {error_msg}")
-        return {"error": error_msg}
-
-# Update generate_animation to return proper result format
-def generate_animation(
-    character: str,
-    prompt: str,
-    num_frames: int = 16,
-    fps: int = 8,
-    guidance_scale: float = 7.5,
-    num_inference_steps: int = 15,
-    seed: Optional[int] = None,
-    width: int = 512,
-    height: int = 512,
-    **kwargs
-) -> Dict[str, str]:
-    """Generate character animation using frame-to-frame conditioning with ControlNet pose"""
-    # Load AnimateDiff pipeline and ControlNet pose model
-    pipeline = load_animation_pipeline()
-    controlnet = load_controlnet_pose_model()
-    device = "cuda" if torch.cuda.is_available() else "cpu"
-    pipeline = StableDiffusionControlNetPipeline(
-        vae=pipeline.vae,
-        text_encoder=pipeline.text_encoder,
-        tokenizer=pipeline.tokenizer,
-        unet=pipeline.unet,
-        scheduler=pipeline.scheduler,
-        safety_checker=None,
-        feature_extractor=None,
-        controlnet=controlnet,
-        requires_safety_checker=False
-    ).to(device)
-
-    # Load LoRA weights as before
-    felfel_lora_path = LORA_DIR / "felfel_lora"
-    temo_lora_path = LORA_DIR / "temo_lora"
-    if not felfel_lora_path.exists():
-        raise ValueError(f"Felfel LoRA not found at {felfel_lora_path}")
-    if not temo_lora_path.exists():
-        raise ValueError(f"Temo LoRA not found at {temo_lora_path}")
-    pipeline.load_lora_weights(
-        [str(felfel_lora_path), str(temo_lora_path)],
-        weight_name=["deep_sdxl_turbo_lora_weights.pt", "deep_sdxl_turbo_lora_weights.pt"],
-        adapter_name=["felfel", "temo"]
-    )
-    pipeline.set_adapters(["felfel", "temo"], adapter_weights=[0.8, 0.8])
-
-    # Set seed
-    if seed is None:
-        seed = torch.randint(0, 1000000, (1,)).item()
-    generator = torch.Generator(device).manual_seed(seed)
-
-    # Frame-to-frame conditioning loop
-    frames = []
-    pose_map = None  # Initial pose map (could be user-provided or generated)
-    for i in range(num_frames):
-        if i == 0:
-            # For the first frame, use a blank or user-provided pose map
-            pose_map = np.zeros((height, width, 3), dtype=np.uint8)
-        else:
-            # Extract pose from previous frame
-            prev_frame = np.array(frames[-1])
-            pose_map = extract_pose_map(prev_frame)
-        # Generate frame with ControlNet pose conditioning
-        result = pipeline(
-            prompt,
-            image=pose_map,
-            guidance_scale=guidance_scale,
-            num_inference_steps=num_inference_steps,
-            height=height,
-            width=width,
-            generator=generator
-        )
-        frame = result.images[0]
-        frames.append(frame)
-
-    # Save outputs
-    timestamp = int(time.time())
-    gif_path = OUTPUT_DIR / f"{character}_{timestamp}.gif"
-    mp4_path = OUTPUT_DIR / f"{character}_{timestamp}.mp4"
-    export_to_gif(frames, str(gif_path), fps=fps)
-    export_to_video(frames, str(mp4_path), fps=fps)
-    clear_memory()
-    return {
-        "gif_path": str(gif_path),
-        "mp4_path": str(mp4_path),
-        "seed": seed
-    }
+        
+        # Return detailed error for debugging
+        return {
+            "error": error_msg,
+            "error_type": type(e).__name__,
+            "traceback": traceback.format_exc() if os.getenv("RUNPOD_DEBUG") else None,
+            "generation_time": round(time.time() - start_time, 2),
+            "memory_usage": get_memory_usage()
+        }
 
 # RunPod serverless entry point
 if __name__ == "__main__":
-    import runpod
+    print("🚀 Starting RunPod Cartoon Animation Worker...")
+    print(f"📱 Device: {'CUDA' if torch.cuda.is_available() else 'CPU'}")
+    print(f"🔧 PyTorch: {torch.__version__}")
+    
+    # Initialize directories
+    setup_directories()
+    
+    # Start RunPod serverless worker
     runpod.serverless.start({"handler": handler}) 

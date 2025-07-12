@@ -44,6 +44,8 @@ class TestCartoonAnimationHandler(unittest.TestCase):
         self.assertIn("gif", result)
         self.assertIn("mp4", result)
         self.assertIn("seed", result)
+        self.assertIn("generation_time", result)
+        self.assertIn("memory_usage", result)
         self.assertEqual(result["seed"], 42)
         
         # Check base64 encoded data
@@ -58,7 +60,7 @@ class TestCartoonAnimationHandler(unittest.TestCase):
             "task_type": "tts",
             "dialogue_text": "[S1] Hello, this is a test. [S2] Testing TTS generation.",
             "max_new_tokens": 1024,
-            "guidance_scale": 3.0,
+            "tts_guidance_scale": 3.0,
             "temperature": 1.8,
             "seed": 42
         }
@@ -73,6 +75,8 @@ class TestCartoonAnimationHandler(unittest.TestCase):
         self.assertEqual(result["task_type"], "tts")
         self.assertIn("audio", result)
         self.assertIn("seed", result)
+        self.assertIn("generation_time", result)
+        self.assertIn("memory_usage", result)
         
         # Check base64 encoded audio
         self.assertIsInstance(result["audio"], str)
@@ -109,6 +113,8 @@ class TestCartoonAnimationHandler(unittest.TestCase):
         self.assertIn("mp4", result)
         self.assertIn("audio", result)
         self.assertIn("seed", result)
+        self.assertIn("generation_time", result)
+        self.assertIn("memory_usage", result)
         
         # Check all outputs are present
         self.assertGreater(len(result["gif"]), 0)
