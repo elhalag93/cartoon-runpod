@@ -11,10 +11,10 @@ This handler follows RunPod serverless best practices:
 Example usage:
     import runpod
 
-    def handler(event):
-        input_data = event["input"]
+    def handler(job):
+        job_input = job["input"]
         # Process the input (replace this with your own code)
-        result = process_data(input_data)
+        result = process_data(job_input)
         return result
 
     runpod.serverless.start({"handler": handler})
@@ -423,12 +423,12 @@ def generate_combined(
     
     return combined_result
 
-def handler(event):
+def handler(job):
     """
     RunPod serverless handler function
     
     Args:
-        event: Event dictionary containing 'input' with generation parameters
+        job: Job dictionary containing 'input' with generation parameters
         
     Returns:
         Dictionary with generation results or error information
@@ -441,7 +441,7 @@ def handler(event):
         setup_directories()
         
         # Extract and validate input
-        input_data = event.get("input", {})
+        input_data = job.get("input", {})
         if not input_data:
             return {"error": "No input data provided"}
         

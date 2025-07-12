@@ -33,8 +33,8 @@ class TestCartoonAnimationHandler(unittest.TestCase):
     
     def test_animation_generation(self):
         """Test animation generation"""
-        event = {"input": self.base_input}
-        result = handler(event)
+        job = {"input": self.base_input}
+        result = handler(job)
         
         # Check that no error occurred
         self.assertNotIn("error", result)
@@ -65,8 +65,8 @@ class TestCartoonAnimationHandler(unittest.TestCase):
             "seed": 42
         }
         
-        event = {"input": tts_input}
-        result = handler(event)
+        job = {"input": tts_input}
+        result = handler(job)
         
         # Check that no error occurred
         self.assertNotIn("error", result)
@@ -101,8 +101,8 @@ class TestCartoonAnimationHandler(unittest.TestCase):
             "seed": 84
         }
         
-        event = {"input": combined_input}
-        result = handler(event)
+        job = {"input": combined_input}
+        result = handler(job)
         
         # Check that no error occurred
         self.assertNotIn("error", result)
@@ -129,8 +129,8 @@ class TestCartoonAnimationHandler(unittest.TestCase):
             "prompt": "test prompt"
         }
         
-        event = {"input": invalid_input}
-        result = handler(event)
+        job = {"input": invalid_input}
+        result = handler(job)
         
         # Should return error
         self.assertIn("error", result)
@@ -143,8 +143,8 @@ class TestCartoonAnimationHandler(unittest.TestCase):
             "prompt": "test prompt without character"
         }
         
-        event = {"input": missing_char_input}
-        result = handler(event)
+        job = {"input": missing_char_input}
+        result = handler(job)
         
         # Should handle gracefully (either error or use default)
         # This depends on your handler implementation
@@ -158,8 +158,8 @@ class TestCartoonAnimationHandler(unittest.TestCase):
             "prompt": "test prompt"
         }
         
-        event = {"input": invalid_char_input}
-        result = handler(event)
+        job = {"input": invalid_char_input}
+        result = handler(job)
         
         # Should return error or handle gracefully
         self.assertIsInstance(result, dict)
@@ -178,24 +178,24 @@ class TestCartoonAnimationHandler(unittest.TestCase):
             "num_inference_steps": 100  # Too many
         }
         
-        event = {"input": extreme_input}
-        result = handler(event)
+        job = {"input": extreme_input}
+        result = handler(job)
         
         # Should either clamp values or return error
         self.assertIsInstance(result, dict)
     
     def test_empty_input(self):
         """Test handling of empty input"""
-        event = {"input": {}}
-        result = handler(event)
+        job = {"input": {}}
+        result = handler(job)
         
         # Should handle gracefully
         self.assertIsInstance(result, dict)
     
     def test_memory_usage_reporting(self):
         """Test that memory usage is reported"""
-        event = {"input": self.base_input}
-        result = handler(event)
+        job = {"input": self.base_input}
+        result = handler(job)
         
         if "memory_usage" in result:
             self.assertIn("allocated_gb", result["memory_usage"])
