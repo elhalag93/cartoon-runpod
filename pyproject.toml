@@ -1,0 +1,78 @@
+[project]
+name = "cartoon-animation-worker"
+version = "1.0.0"
+description = "RunPod worker for generating cartoon character animations with voice using Dia TTS and AnimateDiff"
+readme = "README.md"
+requires-python = ">=3.10"
+license = {file = "LICENSE"}
+authors = [
+    {name = "Cartoon Animation Team", email = "contact@example.com"}
+]
+dependencies = [
+    "torch==2.6.0",
+    "torchaudio==2.6.0",
+    "torchvision",
+    "transformers>=4.40.0",
+    "diffusers>=0.30.0",
+    "accelerate>=0.30.0",
+    "runpod>=1.7.0",
+    "gradio>=5.25.2",
+    "fastapi>=0.104.0",
+    "uvicorn>=0.24.0",
+    "huggingface-hub>=0.30.2",
+    "numpy>=1.24.0",
+    "pillow>=10.0.0",
+    "opencv-python>=4.8.0",
+    "soundfile>=0.13.1",
+    "descript-audio-codec>=1.0.0",
+    "pydantic>=2.11.3",
+    "safetensors>=0.5.3",
+    "xformers>=0.0.20",
+    "requests>=2.31.0",
+    "triton==3.2.0 ; sys_platform == 'linux'",
+    "triton-windows==3.2.0.post18 ; sys_platform == 'win32'",
+    "openpose-pytorch"
+]
+
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[project.urls]
+"Homepage" = "https://github.com/elhalag93/cartoon"
+"Bug Tracker" = "https://github.com/elhalag93/cartoon/issues"
+
+[tool.hatch.build.targets.wheel]
+packages = ["src"]
+
+[tool.ruff]
+# Never enforce `E501` (line length violations).
+lint.ignore = ["C901", "E501", "E741", "W605"]
+lint.select = ["C", "E", "F", "I", "W"]
+line-length = 119
+
+# Ignore import violations in all `__init__.py` files.
+[tool.ruff.lint.per-file-ignores]
+"__init__.py" = ["E402", "F401", "F403", "F811"]
+
+[tool.ruff.lint.isort]
+lines-after-imports = 2
+
+[tool.uv.sources]
+torch = [
+  { index = "pytorch-cu126", marker = "sys_platform == 'linux' or sys_platform == 'win32'" },
+]
+torchaudio = [
+  { index = "pytorch-cu126", marker = "sys_platform == 'linux' or sys_platform == 'win32'" },
+]
+
+[[tool.uv.index]]
+name = "pytorch-cu126"
+url = "https://download.pytorch.org/whl/cu126"
+explicit = true
+
+[dependency-groups]
+dev = [
+    "ninja>=1.11.1.4",
+    "packaging>=25.0",
+]

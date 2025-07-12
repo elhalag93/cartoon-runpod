@@ -15,7 +15,7 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
 COPY . .
 
 # Install Python dependencies
-RUN pip install --no-cache-dir -r requirements.txt || pip install --no-cache-dir torch diffusers transformers runpod numpy pillow soundfile tqdm requests
+RUN pip install --no-cache-dir -r requirements.txt || pip install --no-cache-dir torch diffusers transformers runpod numpy pillow soundfile tqdm requests gradio fastapi uvicorn
 
 # Create necessary directories
 RUN mkdir -p /workspace/models/sdxl-turbo /workspace/models/animatediff/motion_adapter /workspace/lora_models /workspace/outputs /workspace/temp
@@ -23,8 +23,14 @@ RUN mkdir -p /workspace/models/sdxl-turbo /workspace/models/animatediff/motion_a
 # Download models (will use environment variables if set)
 RUN python download_models.py || echo "Model download script failed, ensure models are pre-loaded or URLs are set."
 
-# Expose port for RunPod worker
-EXPOSE 8000
+# Expose ports for both interfaces
+EXPOSE 7860 8000
 
-# Set entrypoint to start the worker
-ENTRYPOINT ["python", "src/handler.py"] 
+# Set environment variables for interface mode
+ENV INTERFACE_MODE=web
+ENV HOST=0.0.0.0
+ENV PORT=7860
+
+# Set entrypoint to use the launcher
+ENTRYPOINT ["python", "launch.py"]
+CMD ["web"] 

@@ -2,6 +2,8 @@ import os
 import pathlib
 import requests
 from tqdm import tqdm
+import gdown
+import subprocess
 
 # Directory paths inside container
 MODELS_DIR = pathlib.Path("/workspace/models")
@@ -14,6 +16,13 @@ MOTION_ADAPTER_URL = os.getenv("MOTION_ADAPTER_URL", "https://huggingface.co/ani
 # LoRA weight URLs – you can override via env vars for private links
 TEMO_LORA_URL = os.getenv("TEMO_LORA_URL")  # required
 FELFEL_LORA_URL = os.getenv("FELFEL_LORA_URL")  # required
+
+# Google Drive URL for LoRA models
+GOOGLE_DRIVE_LORA_URL = "https://drive.google.com/drive/folders/1k-LT9g4GjguFuxxTMjpMdf1CGYFoRpEJ?usp=sharing"
+
+CONTROLNET_POSE_REPO = "lllyasviel/ControlNet-v1-1"  # Example repo for pose ControlNet
+CONTROLNET_POSE_MODEL = "controlnet_pose.pth"  # Example filename
+CONTROLNET_POSE_DIR = os.path.join("models", "controlnet")
 
 DOWNLOADS = [
     # (url, destination path)
@@ -46,6 +55,23 @@ def fetch(url: str, dest: pathlib.Path):
     print(f"✅ Saved {dest}")
 
 
+def download_from_google_drive(url, output_path):
+    gdown.download_folder(url, output=output_path, quiet=False, use_cookies=False)
+
+
+def download_controlnet_pose():
+    os.makedirs(CONTROLNET_POSE_DIR, exist_ok=True)
+    model_path = os.path.join(CONTROLNET_POSE_DIR, CONTROLNET_POSE_MODEL)
+    if not os.path.exists(model_path):
+        print(f"Downloading ControlNet pose model to {model_path}...")
+        # Example using huggingface-cli; replace with actual download logic as needed
+        subprocess.run([
+            "huggingface-cli", "download", CONTROLNET_POSE_REPO, "--filename", CONTROLNET_POSE_MODEL, "--local-dir", CONTROLNET_POSE_DIR
+        ], check=True)
+    else:
+        print(f"ControlNet pose model already exists at {model_path}")
+
+
 def main():
     missing_private = [name for name, url in [("TEMO_LORA_URL", TEMO_LORA_URL), ("FELFEL_LORA_URL", FELFEL_LORA_URL)] if url is None]
     if missing_private:
@@ -55,6 +81,17 @@ def main():
             print(f"⚠ Skipping download for {dest.name} (no URL)")
             continue
         fetch(url, dest)
+
+    # Always try to download LoRA models from Google Drive if folders don't exist
+    if not os.path.exists('/workspace/lora_models/felfel_lora'):
+        print("⬇ Downloading Felfel LoRA from Google Drive...")
+        download_from_google_drive(GOOGLE_DRIVE_LORA_URL + '/felfel_lora', '/workspace/lora_models/felfel_lora')
+
+    if not os.path.exists('/workspace/lora_models/temo_lora'):
+        print("⬇ Downloading Temo LoRA from Google Drive...")
+        download_from_google_drive(GOOGLE_DRIVE_LORA_URL + '/temo_lora', '/workspace/lora_models/temo_lora')
+
+    download_controlnet_pose()
 
 
 if __name__ == "__main__":

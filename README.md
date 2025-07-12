@@ -327,35 +327,55 @@ Join our [Discord Server](https://discord.gg/bJq6vjRRKv) for discussions.
 }
 ```
 
-## 🚀 Quick Start
+## 🚀 Quick Start with Docker
 
-### Deploy on RunPod
+### 🎨 Interactive Web Interface (Recommended)
+
+```bash
+# Build and start the web interface
+docker-compose up cartoon-web
+
+# Access at: http://localhost:7860
+```
+
+### 🔌 API Server (For Developers)
+
+```bash
+# Build and start the API server
+docker-compose up cartoon-api
+
+# Access at: http://localhost:8000
+# Documentation: http://localhost:8000/docs
+```
+
+### 🐳 All Services
+
+```bash
+# Start all services simultaneously
+docker-compose up
+
+# Web Interface: http://localhost:7860
+# API Server: http://localhost:8000
+# RunPod Worker: http://localhost:8001
+```
+
+### 🐳 Deploy on RunPod
 
 1. Fork this repository to your GitHub account
 2. Connect your GitHub account to RunPod
 3. Deploy using the GitHub integration
+4. Use the web interface or API endpoints
 
-### Local Development
-
-```bash
-# Clone the repository
-git clone https://github.com/elhalag93/cartoon.git
-cd cartoon
-
-# Build and run with Docker
-docker-compose up --build
-
-# Test the worker
-python src/test_worker.py
-```
-
-### Manual Testing
+### 🧪 Test the System
 
 ```bash
-# Test with sample input
-curl -X POST http://localhost:8000 \
-  -H "Content-Type: application/json" \
-  -d @test_input.json
+# Test interfaces in containers
+docker-compose exec cartoon-web python test_interface.py web
+docker-compose exec cartoon-api python test_interface.py api
+
+# Or test from host machine
+curl http://localhost:7860  # Web interface
+curl http://localhost:8000/health  # API server
 ```
 
 ## 🛠️ Project Structure
