@@ -1,0 +1,169 @@
+{
+  "name": "Cartoon Animation Worker",
+  "description": "Generate cartoon character animations with voice using Dia TTS and AnimateDiff",
+  "version": "1.0.0",
+  "category": "AI/ML",
+  "tags": [
+    "animation",
+    "cartoon",
+    "tts",
+    "text-to-speech",
+    "animatediff",
+    "sdxl",
+    "lora",
+    "character-animation"
+  ],
+  "author": "Cartoon Animation Team",
+  "license": "Apache-2.0",
+  "repository": "https://github.com/your-username/cartoon-runpod",
+  "documentation": "https://github.com/your-username/cartoon-runpod/blob/main/README.md",
+  "readme": "Generate high-quality cartoon character animations with synchronized voice using AI. Supports custom characters (Temo, Felfel) with LoRA weights, AnimateDiff for smooth animations, and Dia TTS for realistic speech generation.",
+  "runtime": {
+    "python_version": "3.10",
+    "cuda_version": "12.1",
+    "pytorch_version": "2.6.0"
+  },
+  "resources": {
+    "gpu_types": [
+      "RTX A6000",
+      "RTX 4090",
+      "RTX 3090",
+      "A40"
+    ],
+    "gpu_count": 1,
+    "cpu_count": 8,
+    "memory_gb": 32,
+    "disk_gb": 50
+  },
+  "endpoints": [
+    {
+      "name": "generate",
+      "description": "Generate cartoon animations with optional TTS",
+      "input_schema": {
+        "type": "object",
+        "properties": {
+          "task_type": {
+            "type": "string",
+            "enum": ["animation", "tts", "combined"],
+            "default": "animation",
+            "description": "Type of generation to perform"
+          },
+          "character": {
+            "type": "string",
+            "enum": ["temo", "felfel"],
+            "description": "Character to animate"
+          },
+          "prompt": {
+            "type": "string",
+            "description": "Text prompt describing the animation"
+          },
+          "dialogue_text": {
+            "type": "string",
+            "description": "Text for TTS generation with [S1] and [S2] speaker tags"
+          },
+          "num_frames": {
+            "type": "integer",
+            "minimum": 8,
+            "maximum": 32,
+            "default": 16,
+            "description": "Number of animation frames"
+          },
+          "fps": {
+            "type": "integer",
+            "minimum": 4,
+            "maximum": 12,
+            "default": 8,
+            "description": "Frames per second"
+          },
+          "width": {
+            "type": "integer",
+            "minimum": 256,
+            "maximum": 768,
+            "default": 512,
+            "description": "Output width in pixels"
+          },
+          "height": {
+            "type": "integer",
+            "minimum": 256,
+            "maximum": 768,
+            "default": 512,
+            "description": "Output height in pixels"
+          },
+          "guidance_scale": {
+            "type": "number",
+            "minimum": 1.0,
+            "maximum": 15.0,
+            "default": 7.5,
+            "description": "Guidance scale for animation"
+          },
+          "num_inference_steps": {
+            "type": "integer",
+            "minimum": 10,
+            "maximum": 30,
+            "default": 15,
+            "description": "Number of inference steps"
+          },
+          "seed": {
+            "type": "integer",
+            "description": "Random seed for reproducibility"
+          }
+        },
+        "required": []
+      },
+      "output_schema": {
+        "type": "object",
+        "properties": {
+          "task_type": {
+            "type": "string",
+            "description": "Type of generation performed"
+          },
+          "gif": {
+            "type": "string",
+            "description": "Base64-encoded GIF animation"
+          },
+          "mp4": {
+            "type": "string",
+            "description": "Base64-encoded MP4 video"
+          },
+          "audio": {
+            "type": "string",
+            "description": "Base64-encoded audio file"
+          },
+          "seed": {
+            "type": "integer",
+            "description": "Seed used for generation"
+          },
+          "memory_usage": {
+            "type": "object",
+            "description": "GPU memory usage statistics"
+          }
+        }
+      }
+    }
+  ],
+  "examples": [
+    {
+      "name": "Temo Animation",
+      "description": "Generate Temo character walking on moon",
+      "input": {
+        "task_type": "animation",
+        "character": "temo",
+        "prompt": "temo character walking on moon surface, detailed cartoon style",
+        "num_frames": 16,
+        "seed": 42
+      }
+    },
+    {
+      "name": "Combined Animation + TTS",
+      "description": "Generate animation with synchronized speech",
+      "input": {
+        "task_type": "combined",
+        "character": "felfel",
+        "prompt": "felfel character waving hello",
+        "dialogue_text": "[S1] Hello everyone! [S2] Nice to meet you!",
+        "num_frames": 16,
+        "seed": 84
+      }
+    }
+  ]
+} 

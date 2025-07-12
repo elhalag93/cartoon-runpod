@@ -327,9 +327,39 @@ Join our [Discord Server](https://discord.gg/bJq6vjRRKv) for discussions.
 }
 ```
 
-## 🚀 Quick Start with Docker
+## 🚀 Quick Start
 
-### 🎨 Interactive Web Interface (Recommended)
+### 🌐 RunPod Deployment (Recommended)
+
+1. **Use Pre-built Image**:
+   ```
+   your-dockerhub-username/cartoon-animation:latest
+   ```
+
+2. **Set Container Command**:
+   - For worker mode: `python src/handler.py`
+   - For web interface: `python launch.py web`
+   - For API server: `python launch.py api`
+
+3. **Configure Environment**:
+   - Set `TEMO_LORA_URL` and `FELFEL_LORA_URL` for private LoRA weights
+   - Expose port 7860 for web interface or 8000 for API
+
+4. **Send Jobs**:
+   ```json
+   {
+     "input": {
+       "task_type": "combined",
+       "character": "temo",
+       "prompt": "temo character walking on moon surface",
+       "dialogue_text": "[S1] Hello from the moon!",
+       "num_frames": 16,
+       "seed": 42
+     }
+   }
+   ```
+
+### 🎨 Interactive Web Interface (Local)
 
 ```bash
 # Build and start the web interface
@@ -338,7 +368,7 @@ docker-compose up cartoon-web
 # Access at: http://localhost:7860
 ```
 
-### 🔌 API Server (For Developers)
+### 🔌 API Server (Local)
 
 ```bash
 # Build and start the API server
@@ -348,34 +378,17 @@ docker-compose up cartoon-api
 # Documentation: http://localhost:8000/docs
 ```
 
-### 🐳 All Services
-
-```bash
-# Start all services simultaneously
-docker-compose up
-
-# Web Interface: http://localhost:7860
-# API Server: http://localhost:8000
-# RunPod Worker: http://localhost:8001
-```
-
-### 🐳 Deploy on RunPod
-
-1. Fork this repository to your GitHub account
-2. Connect your GitHub account to RunPod
-3. Deploy using the GitHub integration
-4. Use the web interface or API endpoints
-
 ### 🧪 Test the System
 
 ```bash
-# Test interfaces in containers
-docker-compose exec cartoon-web python test_interface.py web
-docker-compose exec cartoon-api python test_interface.py api
+# Run tests locally
+python run_tests.py
 
-# Or test from host machine
-curl http://localhost:7860  # Web interface
-curl http://localhost:8000/health  # API server
+# Test Docker build
+docker build -t cartoon-animation-test .
+
+# Test worker locally
+python src/test_worker.py
 ```
 
 ## 🛠️ Project Structure
