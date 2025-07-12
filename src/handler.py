@@ -7,6 +7,17 @@ This handler follows RunPod serverless best practices:
 - Memory management and optimization
 - Base64 encoded outputs for file transfer
 - Comprehensive logging and monitoring
+
+Example usage:
+    import runpod
+
+    def handler(event):
+        input_data = event["input"]
+        # Process the input (replace this with your own code)
+        result = process_data(input_data)
+        return result
+
+    runpod.serverless.start({"handler": handler})
 """
 
 import os
@@ -19,7 +30,7 @@ import traceback
 from typing import Dict, Any, Optional, Union
 from pathlib import Path
 
-import runpod
+import runpod  # Required
 import torch
 import numpy as np
 import soundfile as sf
@@ -412,12 +423,12 @@ def generate_combined(
     
     return combined_result
 
-def handler(job: Dict[str, Any]) -> Dict[str, Any]:
+def handler(event):
     """
     RunPod serverless handler function
     
     Args:
-        job: Job dictionary containing 'input' with generation parameters
+        event: Event dictionary containing 'input' with generation parameters
         
     Returns:
         Dictionary with generation results or error information
@@ -430,7 +441,7 @@ def handler(job: Dict[str, Any]) -> Dict[str, Any]:
         setup_directories()
         
         # Extract and validate input
-        input_data = job.get("input", {})
+        input_data = event.get("input", {})
         if not input_data:
             return {"error": "No input data provided"}
         
@@ -513,4 +524,4 @@ if __name__ == "__main__":
     setup_directories()
     
     # Start RunPod serverless worker
-    runpod.serverless.start({"handler": handler}) 
+    runpod.serverless.start({"handler": handler})  # Required 
