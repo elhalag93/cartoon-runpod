@@ -90,11 +90,13 @@ jobs:
         # Check required files exist
         test -f .runpod/config.yaml
         test -f .runpod/hub.json
+        test -f .runpod/tests.json
         test -f src/handler.py
         test -f Dockerfile
         
         # Validate JSON syntax
         python -m json.tool .runpod/hub.json > /dev/null
+        python -m json.tool .runpod/tests.json > /dev/null
         
         # Check handler has required function
         python -c "from src.handler import handler; print('Handler function found')"

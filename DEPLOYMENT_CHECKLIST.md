@@ -5,6 +5,7 @@ Your repository has been updated with all the necessary files for RunPod deploym
 ## ✅ Repository Updates Completed
 
 - [x] Added `.runpod/hub.json` - RunPod Hub configuration
+- [x] Added `.runpod/tests.json` - RunPod Hub test definitions
 - [x] Added comprehensive test suite in `tests/`
 - [x] Added GitHub Actions workflow for CI/CD
 - [x] Added release automation script
