@@ -239,6 +239,8 @@ Join our [Discord Server](https://discord.gg/bJq6vjRRKv) for discussions.
 
 # 🎬 Cartoon Animation RunPod Worker
 
+[![Runpod](https://api.runpod.io/badge/elhalag93/cartoon-runpod)](https://console.runpod.io/hub/elhalag93/cartoon-runpod)
+
 > Generate cartoon character animations with voice using Dia TTS and AnimateDiff on RunPod
 
 ## ✨ Features

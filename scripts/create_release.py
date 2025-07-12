@@ -99,7 +99,7 @@ def main():
     
     # Write to file
     notes_file = Path("release_notes.md")
-    with open(notes_file, "w") as f:
+    with open(notes_file, "w", encoding="utf-8") as f:
         f.write(notes)
     
     print(f"Release notes written to {notes_file}")

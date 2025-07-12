@@ -15,8 +15,8 @@
   ],
   "author": "Cartoon Animation Team",
   "license": "Apache-2.0",
-  "repository": "https://github.com/your-username/cartoon-runpod",
-  "documentation": "https://github.com/your-username/cartoon-runpod/blob/main/README.md",
+  "repository": "https://github.com/elhalag93/cartoon-runpod",
+  "documentation": "https://github.com/elhalag93/cartoon-runpod/blob/main/README.md",
   "readme": "Generate high-quality cartoon character animations with synchronized voice using AI. Supports custom characters (Temo, Felfel) with LoRA weights, AnimateDiff for smooth animations, and Dia TTS for realistic speech generation.",
   "runtime": {
     "python_version": "3.10",
