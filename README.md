@@ -1,3 +1,4 @@
+[![Runpod](https://api.runpod.io/badge/elhalag93/cartoon-runpod)](https://console.runpod.io/hub/elhalag93/cartoon-runpod)
 <p align="center">
 <a href="https://github.com/nari-labs/dia">
 <img src="./dia/static/images/banner.png">
