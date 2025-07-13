@@ -109,20 +109,16 @@ jobs:
         import sys
         import os
         
-        # Add src to path and avoid circular import
-        sys.path.insert(0, 'src')
-        
         try:
-            # Import from src.handler module to avoid circular import
-            import handler as src_handler
-            handler_func = src_handler.handler
+            # Import from root handler.py (the correct RunPod entry point)
+            from handler import handler
             
-            print('✅ Handler function imports successfully from src/handler.py')
-            print(f'✅ Handler is callable: {callable(handler_func)}')
+            print('✅ Handler function imports successfully from handler.py')
+            print(f'✅ Handler is callable: {callable(handler)}')
             
             # Test handler with minimal input (should handle gracefully even without models)
-            test_job = {'input': {'task_type': 'animation', 'character': 'temo', 'prompt': 'test'}}
-            result = handler_func(test_job)
+            test_event = {'input': {'task_type': 'animation', 'character': 'temo', 'prompt': 'test'}}
+            result = handler(test_event)
             
             if isinstance(result, dict):
                 print('✅ Handler returns proper dictionary format')
@@ -262,13 +258,10 @@ jobs:
         # Check handler has required function
         echo "Validating handler function..."
         python -c "
-        import sys
-        sys.path.insert(0, 'src')
         try:
-            import handler as src_handler
-            handler_func = src_handler.handler
-            print('✅ Handler function found and importable from src/handler.py')
-            print(f'✅ Handler is callable: {callable(handler_func)}')
+            from handler import handler
+            print('✅ Handler function found and importable from handler.py')
+            print(f'✅ Handler is callable: {callable(handler)}')
         except Exception as e:
             print(f'❌ Handler validation failed: {e}')
             sys.exit(1)
