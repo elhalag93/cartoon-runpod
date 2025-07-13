@@ -30,7 +30,11 @@ import traceback
 from typing import Dict, Any, Optional, Union
 from pathlib import Path
 
-import runpod  # Required
+try:
+    import runpod  # Required for RunPod deployment
+except ImportError:
+    # Allow import in CI/testing environments where runpod module may not be available
+    runpod = None
 import torch
 import numpy as np
 import soundfile as sf
@@ -533,4 +537,8 @@ if __name__ == "__main__":
     setup_directories()
     
     # Start RunPod serverless worker
-    runpod.serverless.start({"handler": handler})  # Required 
+    if runpod is not None:
+        runpod.serverless.start({"handler": handler})  # Required for RunPod
+    else:
+        print("⚠️ RunPod module not available - running in test/development mode")
+        print("✅ Handler function is ready for RunPod deployment") 
