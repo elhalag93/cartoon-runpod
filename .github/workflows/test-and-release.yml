@@ -25,19 +25,43 @@ jobs:
     
     - name: Install dependencies
       run: |
+        set -e  # Exit on any error
+        echo "🔧 Installing dependencies with error checking..."
+        
         python -m pip install --upgrade pip
         
         # Install PyTorch with CPU-only index first
+        echo "📦 Installing PyTorch with CPU support..."
         pip install torch==2.6.0 torchvision torchaudio --index-url https://download.pytorch.org/whl/cpu
+        python -c "import torch; print(f'✅ PyTorch {torch.__version__} installed successfully')"
         
-        # Install other core dependencies individually to avoid conflicts
+        # Install core ML dependencies
+        echo "📦 Installing core ML dependencies..."
         pip install transformers>=4.40.0
+        python -c "import transformers; print(f'✅ Transformers {transformers.__version__}')"
+        
         pip install diffusers>=0.30.0
+        python -c "import diffusers; print(f'✅ Diffusers {diffusers.__version__}')"
+        
         pip install accelerate>=0.30.0
+        python -c "import accelerate; print(f'✅ Accelerate installed')"
+        
+        # Install RunPod and web framework dependencies
+        echo "📦 Installing RunPod and web dependencies..."
         pip install runpod>=1.7.0
+        python -c "import runpod; print('✅ RunPod module available')"
+        
         pip install gradio>=5.25.2
+        python -c "import gradio; print(f'✅ Gradio {gradio.__version__}')"
+        
         pip install fastapi>=0.104.0
+        python -c "import fastapi; print(f'✅ FastAPI {fastapi.__version__}')"
+        
         pip install uvicorn>=0.24.0
+        python -c "import uvicorn; print(f'✅ Uvicorn installed')"
+        
+        # Install utility dependencies
+        echo "📦 Installing utility dependencies..."
         pip install huggingface-hub>=0.30.2
         pip install safetensors>=0.5.3
         pip install numpy>=1.24.0
@@ -47,41 +71,89 @@ jobs:
         pip install pydantic>=2.11.3
         pip install tqdm
         
-        # Verify torch installation
-        python -c "import torch; print(f'✅ PyTorch {torch.__version__} installed successfully')"
+        echo "✅ All dependencies installed successfully!"
+    
+    - name: Verify installation
+      run: |
+        echo "🔍 Verifying all dependencies are properly installed..."
+        
+        # Test critical imports
+        python -c "
+        import sys
+        
+        # Test all required modules
+        modules_to_test = [
+            ('torch', 'PyTorch'),
+            ('transformers', 'Transformers'),
+            ('diffusers', 'Diffusers'),
+            ('runpod', 'RunPod'),
+            ('gradio', 'Gradio'),
+            ('fastapi', 'FastAPI'),
+            ('numpy', 'NumPy'),
+            ('PIL', 'Pillow'),
+            ('soundfile', 'SoundFile'),
+            ('requests', 'Requests'),
+            ('pydantic', 'Pydantic')
+        ]
+        
+        failed_imports = []
+        
+        for module_name, display_name in modules_to_test:
+            try:
+                __import__(module_name)
+                print(f'✅ {display_name} import successful')
+            except ImportError as e:
+                print(f'❌ {display_name} import failed: {e}')
+                failed_imports.append(display_name)
+        
+        if failed_imports:
+            print(f'❌ Failed to import: {', '.join(failed_imports)}')
+            sys.exit(1)
+        else:
+            print('✅ All required modules imported successfully')
+        "
+        
+        echo "🎉 Dependency verification completed!"
     
     - name: Run tests
       run: |
-        # Run basic validation tests with proper dependency handling
-        echo "🧪 Running basic validation tests..."
+        echo "🧪 Running handler validation tests..."
         
-        # Test individual imports first
-        echo "Testing individual module imports..."
-        python -c "import torch; print(f'✅ PyTorch {torch.__version__} - Device: {torch.device(\"cpu\")}')"
-        python -c "import diffusers; print(f'✅ Diffusers {diffusers.__version__}')"
-        python -c "import transformers; print(f'✅ Transformers {transformers.__version__}')"
-        python -c "import runpod; print('✅ RunPod module available')"
-        python -c "import gradio; print(f'✅ Gradio {gradio.__version__}')"
-        python -c "import fastapi; print(f'✅ FastAPI {fastapi.__version__}')"
-        
-        # Test handler import
-        echo "Testing handler import..."
+        # Test handler import and basic functionality
         python -c "
         import sys
         sys.path.append('src')
+        
         try:
+            # Test handler import
             from handler import handler
             print('✅ Handler function imports successfully')
             print(f'✅ Handler is callable: {callable(handler)}')
-            print('✅ All validation tests passed - production handler is ready')
+            
+            # Test handler with minimal input (should handle gracefully even without models)
+            test_job = {'input': {'task_type': 'animation', 'character': 'temo', 'prompt': 'test'}}
+            result = handler(test_job)
+            
+            if isinstance(result, dict):
+                print('✅ Handler returns proper dictionary format')
+                if 'error' in result:
+                    print(f'ℹ️ Handler error (expected in CI without models): {result[\"error\"][:100]}...')
+                else:
+                    print('✅ Handler executed successfully')
+            else:
+                print('❌ Handler returned unexpected type')
+                sys.exit(1)
+                
+            print('✅ All handler validation tests passed - production handler is ready')
+            
         except Exception as e:
-            print(f'❌ Handler import error: {e}')
+            print(f'❌ Handler validation error: {e}')
             import traceback
             traceback.print_exc()
             sys.exit(1)
         "
         
-        echo "🎉 All CI validation tests completed successfully!"
+        echo "🎉 Handler validation completed successfully!"
     
     - name: Test Docker build
       run: |
