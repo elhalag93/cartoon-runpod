@@ -72,6 +72,27 @@ def get_memory_usage() -> Dict[str, float]:
         }
     return {"allocated_gb": 0, "reserved_gb": 0, "total_gb": 0, "free_gb": 0}
 
+def verify_gpu_setup():
+    """Verify GPU is available and being used"""
+    if not torch.cuda.is_available():
+        raise RuntimeError("🚨 CRITICAL: CUDA/GPU not available! This will be extremely slow on CPU!")
+    
+    gpu_name = torch.cuda.get_device_name(0)
+    memory_gb = torch.cuda.get_device_properties(0).total_memory / 1024**3
+    
+    print(f"🎮 GPU DETECTED: {gpu_name}")
+    print(f"💾 GPU Memory: {memory_gb:.1f}GB")
+    print(f"🔥 CUDA Version: {torch.version.cuda}")
+    
+    if memory_gb < 8:
+        print("⚠️ WARNING: GPU has less than 8GB VRAM - may run out of memory")
+    elif memory_gb >= 16:
+        print("✅ EXCELLENT: GPU has 16GB+ VRAM - perfect for RunPod deployment")
+    else:
+        print("✅ GOOD: GPU has sufficient VRAM for generation")
+    
+    return True
+
 class ModelHandler:
     """Model handler following RunPod best practices"""
     
@@ -140,13 +161,21 @@ class ModelHandler:
                 skip_prk_steps=True
             )
             
-            # Enable memory optimizations (following working example)
+            # Enable memory optimizations for GPU (NO CPU OFFLOAD!)
             if device == "cuda":
-                self.animation_pipeline.enable_xformers_memory_efficient_attention()
-                self.animation_pipeline.enable_model_cpu_offload()  # Key optimization from working example
-                self.animation_pipeline.enable_attention_slicing()
+                try:
+                    self.animation_pipeline.enable_xformers_memory_efficient_attention()
+                    print("✅ xFormers memory efficient attention enabled")
+                except Exception:
+                    print("⚠️ xFormers not available, using default attention")
+                
+                # KEEP MODELS ON GPU FOR MAXIMUM SPEED
+                # Only use attention slicing and VAE optimizations
+                self.animation_pipeline.enable_attention_slicing("max")
                 self.animation_pipeline.enable_vae_slicing()
                 self.animation_pipeline.enable_vae_tiling()
+                
+                print("🚀 GPU optimizations enabled - models staying on GPU for maximum speed")
             
             print("✅ AnimateDiff pipeline loaded successfully")
         except Exception as e:
@@ -157,8 +186,18 @@ class ModelHandler:
     
     def load_models(self):
         """Load all models at startup"""
+        # VERIFY GPU IS AVAILABLE FIRST
+        verify_gpu_setup()
+        
+        print("🚀 Loading models on GPU for maximum performance...")
         self.load_tts_model()
         self.load_animation_pipeline()
+        
+        # Verify models are on GPU
+        if torch.cuda.is_available():
+            print(f"🎮 TTS Model device: {next(self.dia_model.parameters()).device}")
+            print(f"🎮 Animation Pipeline device: {self.animation_pipeline.device}")
+            print("✅ ALL MODELS LOADED ON GPU - READY FOR FAST GENERATION!")
 
 # Initialize models globally (following working example pattern)
 MODELS = ModelHandler()
@@ -544,14 +583,24 @@ def generate_cartoon(job):
 # RunPod serverless entry point (following working example exactly)
 if __name__ == "__main__":
     print("🚀 Starting RunPod Cartoon Animation Worker...")
-    print(f"📱 Device: {'CUDA' if torch.cuda.is_available() else 'CPU'}")
     print(f"🔧 PyTorch: {torch.__version__}")
+    
+    # CRITICAL: Verify GPU is available
+    if torch.cuda.is_available():
+        gpu_name = torch.cuda.get_device_name(0)
+        memory_gb = torch.cuda.get_device_properties(0).total_memory / 1024**3
+        print(f"🎮 GPU: {gpu_name} ({memory_gb:.1f}GB)")
+        print("✅ GPU DETECTED - FAST GENERATION ENABLED")
+    else:
+        print("🚨 WARNING: NO GPU DETECTED - THIS WILL BE EXTREMELY SLOW!")
+        print("🚨 Make sure you're running on RunPod with GPU enabled!")
     
     # Initialize directories
     setup_directories()
     
     # Start RunPod serverless worker
     if runpod is not None:
+        print("🎬 Starting RunPod serverless handler...")
         runpod.serverless.start({"handler": generate_cartoon})
     else:
         print("⚠️ RunPod module not available - running in development mode")
