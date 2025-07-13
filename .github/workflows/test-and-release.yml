@@ -53,8 +53,8 @@ jobs:
         # Install only essential dependencies for CI validation
         echo "Installing core dependencies..."
         
-        # Install NumPy first (required by many packages)
-        pip install --no-cache-dir numpy>=1.24.0
+        # Install NumPy first (compatible with PyTorch 2.1.0)
+        pip install --no-cache-dir "numpy>=1.24.0,<2.0.0"
         
         # Install PyTorch CPU-only
         pip install --no-cache-dir torch==2.1.0+cpu torchvision==0.16.0+cpu torchaudio==2.1.0+cpu --index-url https://download.pytorch.org/whl/cpu
@@ -128,7 +128,7 @@ jobs:
             print(f'❌ Handler import failed: {e}')
             sys.exit(1)
         
-        # Test basic validation (expected to fail gracefully in CI)
+        # Test basic validation in CI environment
         print('🧪 Testing handler validation in CI environment...')
         test_job = {'input': {'task_type': 'animation', 'character': 'temo', 'prompt': 'test'}, 'id': 'test-job-123'}
         
@@ -136,17 +136,22 @@ jobs:
             result = generate_cartoon(test_job)
             if isinstance(result, dict):
                 print('✅ Handler returns proper dictionary format')
-                if 'error' in result:
-                    print('ℹ️ Handler error (expected in CI): OK')
+                if 'ci_test' in result and result['ci_test']:
+                    print('✅ Handler CI validation successful')
+                    print(f'✅ Message: {result.get(\"message\", \"N/A\")}')
+                elif 'error' in result:
+                    print(f'❌ Handler error: {result[\"error\"]}')
+                    sys.exit(1)
                 else:
                     print('✅ Handler executed successfully')
             else:
                 print('❌ Handler returned unexpected type')
                 sys.exit(1)
         except Exception as e:
-            print(f'ℹ️ Handler exception (expected in CI): {str(e)[:100]}...')
+            print(f'❌ Handler exception: {str(e)[:200]}...')
+            sys.exit(1)
         
-        print('✅ Handler validation passed - production handler is ready')
+        print('✅ Handler validation passed - production handler is ready for RunPod deployment')
         "
         
         echo "Handler validation completed!"
