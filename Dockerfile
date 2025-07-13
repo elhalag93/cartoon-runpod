@@ -35,5 +35,4 @@ ENV PORT=7860
 # For RunPod serverless: python handler.py
 # For web interface: python launch.py web
 # For API server: python launch.py api
-ENTRYPOINT ["python"]
-CMD ["handler.py"] 
+CMD python -u handler.py
