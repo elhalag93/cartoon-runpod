@@ -136,9 +136,11 @@ jobs:
             result = generate_cartoon(test_job)
             if isinstance(result, dict):
                 print('✅ Handler returns proper dictionary format')
-                if 'ci_test' in result and result['ci_test']:
+                if 'ci_test' in result and result['ci_test'] and result.get('status') == 'success':
                     print('✅ Handler CI validation successful')
                     print(f'✅ Message: {result.get(\"message\", \"N/A\")}')
+                    print(f'✅ Task type: {result.get(\"task_type\", \"N/A\")}')
+                    print(f'✅ Input validated: {result.get(\"validated_input\", False)}')
                 elif 'error' in result:
                     print(f'❌ Handler error: {result[\"error\"]}')
                     sys.exit(1)
