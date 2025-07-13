@@ -26,38 +26,62 @@ jobs:
     - name: Install dependencies
       run: |
         python -m pip install --upgrade pip
-        pip install torch torchvision torchaudio --index-url https://download.pytorch.org/whl/cpu
-        pip install diffusers transformers runpod numpy pillow soundfile tqdm requests gradio fastapi uvicorn accelerate
-        pip install -r requirements.txt || echo "requirements.txt installation failed, using fallback packages"
+        
+        # Install PyTorch with CPU-only index first
+        pip install torch==2.6.0 torchvision torchaudio --index-url https://download.pytorch.org/whl/cpu
+        
+        # Install other core dependencies individually to avoid conflicts
+        pip install transformers>=4.40.0
+        pip install diffusers>=0.30.0
+        pip install accelerate>=0.30.0
+        pip install runpod>=1.7.0
+        pip install gradio>=5.25.2
+        pip install fastapi>=0.104.0
+        pip install uvicorn>=0.24.0
+        pip install huggingface-hub>=0.30.2
+        pip install safetensors>=0.5.3
+        pip install numpy>=1.24.0
+        pip install pillow>=10.0.0
+        pip install soundfile>=0.13.1
+        pip install requests>=2.31.0
+        pip install pydantic>=2.11.3
+        pip install tqdm
+        
+        # Verify torch installation
+        python -c "import torch; print(f'✅ PyTorch {torch.__version__} installed successfully')"
     
     - name: Run tests
       run: |
         # Run basic validation tests with proper dependency handling
-        echo "Running basic validation tests..."
+        echo "🧪 Running basic validation tests..."
+        
+        # Test individual imports first
+        echo "Testing individual module imports..."
+        python -c "import torch; print(f'✅ PyTorch {torch.__version__} - Device: {torch.device(\"cpu\")}')"
+        python -c "import diffusers; print(f'✅ Diffusers {diffusers.__version__}')"
+        python -c "import transformers; print(f'✅ Transformers {transformers.__version__}')"
+        python -c "import runpod; print('✅ RunPod module available')"
+        python -c "import gradio; print(f'✅ Gradio {gradio.__version__}')"
+        python -c "import fastapi; print(f'✅ FastAPI {fastapi.__version__}')"
+        
+        # Test handler import
+        echo "Testing handler import..."
         python -c "
         import sys
         sys.path.append('src')
         try:
-            # Test that all required modules can be imported
-            import torch
-            import diffusers
-            import transformers
-            import runpod
-            print('✅ All required dependencies are available')
-            
-            # Test handler import
             from handler import handler
             print('✅ Handler function imports successfully')
             print(f'✅ Handler is callable: {callable(handler)}')
-            
-        except ImportError as e:
-            print(f'❌ Import error: {e}')
-            sys.exit(1)
+            print('✅ All validation tests passed - production handler is ready')
         except Exception as e:
-            print(f'❌ Unexpected error: {e}')
+            print(f'❌ Handler import error: {e}')
+            import traceback
+            traceback.print_exc()
             sys.exit(1)
         "
-        echo "✅ All validation tests passed - production handler is ready"
+        
+        echo "🎉 All CI validation tests completed successfully!"
     
     - name: Test Docker build
       run: |
