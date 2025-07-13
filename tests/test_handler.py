@@ -35,10 +35,10 @@ class TestCartoonAnimationHandler(unittest.TestCase):
     
     def test_animation_generation(self):
         """Test animation generation input validation"""
-        from handler import handler
+        from handler import generate_cartoon
         
-        job = {"input": self.base_input}
-        result = handler(job)
+        job = {"input": self.base_input, "id": "test-job-123"}
+        result = generate_cartoon(job)
         
         # In CI/testing environment, should get an error about model loading
         self.assertIsInstance(result, dict)

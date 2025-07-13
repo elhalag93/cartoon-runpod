@@ -32,4 +32,4 @@ environment:
 
 handler:
   file: "handler.py"
-  function: "handler" 
+  function: "generate_cartoon" 

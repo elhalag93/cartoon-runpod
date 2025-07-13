@@ -111,14 +111,14 @@ jobs:
         
         try:
             # Import from root handler.py (the correct RunPod entry point)
-            from handler import handler
+            from handler import generate_cartoon
             
             print('✅ Handler function imports successfully from handler.py')
-            print(f'✅ Handler is callable: {callable(handler)}')
+            print(f'✅ Handler is callable: {callable(generate_cartoon)}')
             
             # Test handler with minimal input (should handle gracefully even without models)
-            test_event = {'input': {'task_type': 'animation', 'character': 'temo', 'prompt': 'test'}}
-            result = handler(test_event)
+            test_job = {'input': {'task_type': 'animation', 'character': 'temo', 'prompt': 'test'}, 'id': 'test-job-123'}
+            result = generate_cartoon(test_job)
             
             if isinstance(result, dict):
                 print('✅ Handler returns proper dictionary format')
@@ -259,9 +259,9 @@ jobs:
         echo "Validating handler function..."
         python -c "
         try:
-            from handler import handler
+            from handler import generate_cartoon
             print('✅ Handler function found and importable from handler.py')
-            print(f'✅ Handler is callable: {callable(handler)}')
+            print(f'✅ Handler is callable: {callable(generate_cartoon)}')
         except Exception as e:
             print(f'❌ Handler validation failed: {e}')
             sys.exit(1)

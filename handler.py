@@ -16,9 +16,11 @@ from pathlib import Path
 
 try:
     import runpod
+    from runpod.serverless.utils import rp_cleanup
 except ImportError:
     print("⚠️ RunPod module not available - this is expected in local development")
     runpod = None
+
 import torch
 import numpy as np
 import soundfile as sf
@@ -27,11 +29,8 @@ from diffusers import AnimateDiffSDXLPipeline, MotionAdapter, DDIMScheduler
 from diffusers.utils import export_to_video, export_to_gif
 from transformers import AutoProcessor, DiaForConditionalGeneration
 
-# Global model instances
-dia_model = None
-dia_processor = None
-animation_pipeline = None
-motion_adapter = None
+# Clear GPU cache at startup
+torch.cuda.empty_cache()
 
 # Configuration
 MODELS_DIR = Path("/workspace/models")
@@ -73,63 +72,67 @@ def get_memory_usage() -> Dict[str, float]:
         }
     return {"allocated_gb": 0, "reserved_gb": 0, "total_gb": 0, "free_gb": 0}
 
-def load_tts_model():
-    """Load Dia TTS model and processor"""
-    global dia_model, dia_processor
+class ModelHandler:
+    """Model handler following RunPod best practices"""
     
-    if dia_model is None or dia_processor is None:
+    def __init__(self):
+        self.dia_model = None
+        self.dia_processor = None
+        self.animation_pipeline = None
+        self.motion_adapter = None
+        self.load_models()
+    
+    def load_tts_model(self):
+        """Load Dia TTS model and processor"""
         print("🔄 Loading Dia TTS model...")
         device = "cuda" if torch.cuda.is_available() else "cpu"
         
         try:
-            dia_processor = AutoProcessor.from_pretrained(DIA_MODEL_CHECKPOINT)
-            dia_model = DiaForConditionalGeneration.from_pretrained(
+            self.dia_processor = AutoProcessor.from_pretrained(DIA_MODEL_CHECKPOINT)
+            self.dia_model = DiaForConditionalGeneration.from_pretrained(
                 DIA_MODEL_CHECKPOINT,
                 torch_dtype=torch.float16 if device == "cuda" else torch.float32,
                 device_map="auto" if device == "cuda" else None
             )
             
             if device != "cuda":
-                dia_model = dia_model.to(device)
+                self.dia_model = self.dia_model.to(device)
             
             print("✅ Dia TTS model loaded successfully")
         except Exception as e:
             print(f"❌ Error loading TTS model: {e}")
             raise
+        
+        return self.dia_model, self.dia_processor
     
-    return dia_model, dia_processor
-
-def load_animation_pipeline():
-    """Load AnimateDiff pipeline with SDXL for smooth animations"""
-    global animation_pipeline, motion_adapter
-    
-    if animation_pipeline is None:
+    def load_animation_pipeline(self):
+        """Load AnimateDiff pipeline with SDXL"""
         print("🔄 Loading AnimateDiff pipeline...")
         device = "cuda" if torch.cuda.is_available() else "cpu"
         
         try:
             # Load motion adapter
             print("📥 Loading motion adapter...")
-            motion_adapter = MotionAdapter.from_pretrained(
+            self.motion_adapter = MotionAdapter.from_pretrained(
                 MOTION_ADAPTER_ID,
                 torch_dtype=torch.float16 if device == "cuda" else torch.float32
             )
             
             # Load AnimateDiff pipeline
             print("🔄 Creating AnimateDiff pipeline...")
-            animation_pipeline = AnimateDiffSDXLPipeline.from_pretrained(
+            self.animation_pipeline = AnimateDiffSDXLPipeline.from_pretrained(
                 SDXL_MODEL_ID,
-                motion_adapter=motion_adapter,
+                motion_adapter=self.motion_adapter,
                 torch_dtype=torch.float16 if device == "cuda" else torch.float32,
                 variant="fp16" if device == "cuda" else None,
                 use_safetensors=True
             )
             
-            animation_pipeline = animation_pipeline.to(device)
+            self.animation_pipeline = self.animation_pipeline.to(device)
             
             # Configure scheduler
-            animation_pipeline.scheduler = DDIMScheduler.from_config(
-                animation_pipeline.scheduler.config,
+            self.animation_pipeline.scheduler = DDIMScheduler.from_config(
+                self.animation_pipeline.scheduler.config,
                 beta_schedule="linear",
                 steps_offset=1,
                 clip_sample=False,
@@ -137,24 +140,28 @@ def load_animation_pipeline():
                 skip_prk_steps=True
             )
             
-            # Enable memory optimizations
+            # Enable memory optimizations (following working example)
             if device == "cuda":
-                animation_pipeline.enable_attention_slicing()
-                animation_pipeline.enable_vae_slicing()
-                animation_pipeline.enable_vae_tiling()
-                
-                try:
-                    animation_pipeline.enable_xformers_memory_efficient_attention()
-                    print("✅ xFormers memory efficient attention enabled")
-                except Exception:
-                    print("⚠️ xFormers not available, using default attention")
+                self.animation_pipeline.enable_xformers_memory_efficient_attention()
+                self.animation_pipeline.enable_model_cpu_offload()  # Key optimization from working example
+                self.animation_pipeline.enable_attention_slicing()
+                self.animation_pipeline.enable_vae_slicing()
+                self.animation_pipeline.enable_vae_tiling()
             
             print("✅ AnimateDiff pipeline loaded successfully")
         except Exception as e:
             print(f"❌ Error loading animation pipeline: {e}")
             raise
+        
+        return self.animation_pipeline
     
-    return animation_pipeline
+    def load_models(self):
+        """Load all models at startup"""
+        self.load_tts_model()
+        self.load_animation_pipeline()
+
+# Initialize models globally (following working example pattern)
+MODELS = ModelHandler()
 
 def load_lora_weights(pipeline, character: str):
     """Load LoRA weights for specific character"""
@@ -186,6 +193,44 @@ def encode_file_to_base64(file_path: str) -> str:
     except Exception as e:
         print(f"❌ Error encoding file {file_path}: {e}")
         return ""
+
+def _save_and_upload_files(result, job_id):
+    """Save and upload generated files, following working example pattern"""
+    os.makedirs(f"/{job_id}", exist_ok=True)
+    response = {}
+    
+    # Handle GIF
+    if "gif_path" in result:
+        gif_local_path = os.path.join(f"/{job_id}", "animation.gif")
+        os.rename(result["gif_path"], gif_local_path)
+        
+        with open(gif_local_path, "rb") as f:
+            gif_data = base64.b64encode(f.read()).decode("utf-8")
+            response["gif"] = f"data:image/gif;base64,{gif_data}"
+    
+    # Handle MP4
+    if "mp4_path" in result:
+        mp4_local_path = os.path.join(f"/{job_id}", "animation.mp4")
+        os.rename(result["mp4_path"], mp4_local_path)
+        
+        with open(mp4_local_path, "rb") as f:
+            mp4_data = base64.b64encode(f.read()).decode("utf-8")
+            response["mp4"] = f"data:video/mp4;base64,{mp4_data}"
+    
+    # Handle Audio
+    if "audio_path" in result:
+        audio_local_path = os.path.join(f"/{job_id}", "audio.wav")
+        os.rename(result["audio_path"], audio_local_path)
+        
+        with open(audio_local_path, "rb") as f:
+            audio_data = base64.b64encode(f.read()).decode("utf-8")
+            response["audio"] = f"data:audio/wav;base64,{audio_data}"
+    
+    # Cleanup
+    if runpod:
+        rp_cleanup.clean([f"/{job_id}"])
+    
+    return response
 
 def validate_input(input_data: Dict[str, Any]) -> Dict[str, Any]:
     """Validate and sanitize input parameters"""
@@ -245,6 +290,7 @@ def validate_input(input_data: Dict[str, Any]) -> Dict[str, Any]:
     
     return validated
 
+@torch.inference_mode()
 def generate_tts(
     dialogue_text: str,
     max_new_tokens: int = 3072,
@@ -257,9 +303,6 @@ def generate_tts(
 ) -> Dict[str, Any]:
     """Generate TTS audio from text"""
     
-    # Load TTS model
-    model, processor = load_tts_model()
-    
     print(f"🎵 Generating TTS for: {dialogue_text[:50]}...")
     
     device = "cuda" if torch.cuda.is_available() else "cpu"
@@ -271,11 +314,11 @@ def generate_tts(
     
     try:
         # Process text
-        inputs = processor(text=[dialogue_text], padding=True, return_tensors="pt").to(device)
+        inputs = MODELS.dia_processor(text=[dialogue_text], padding=True, return_tensors="pt").to(device)
         
         # Generate audio
         with torch.no_grad():
-            outputs = model.generate(
+            outputs = MODELS.dia_model.generate(
                 **inputs,
                 max_new_tokens=max_new_tokens,
                 guidance_scale=tts_guidance_scale,
@@ -285,7 +328,7 @@ def generate_tts(
             )
         
         # Decode audio
-        audio_arrays = processor.batch_decode(outputs)
+        audio_arrays = MODELS.dia_processor.batch_decode(outputs)
         
         # Save audio
         timestamp = int(time.time())
@@ -293,8 +336,7 @@ def generate_tts(
         
         # Save the first audio array
         if audio_arrays and len(audio_arrays) > 0:
-            # Save audio using processor's save method
-            processor.save_audio(audio_arrays, str(audio_path))
+            MODELS.dia_processor.save_audio(audio_arrays, str(audio_path))
         
         clear_memory()
         
@@ -308,6 +350,7 @@ def generate_tts(
         print(f"❌ Error generating TTS: {e}")
         raise
 
+@torch.inference_mode()
 def generate_animation(
     character: str,
     prompt: str,
@@ -323,11 +366,8 @@ def generate_animation(
 ) -> Dict[str, Any]:
     """Generate character animation"""
     
-    # Load animation pipeline
-    pipeline = load_animation_pipeline()
-    
     # Load character LoRA weights
-    load_lora_weights(pipeline, character)
+    load_lora_weights(MODELS.animation_pipeline, character)
     
     print(f"🎬 Generating animation for {character}: {prompt[:50]}...")
     
@@ -336,7 +376,7 @@ def generate_animation(
     
     try:
         # Generate animation
-        result = pipeline(
+        result = MODELS.animation_pipeline(
             prompt=prompt,
             negative_prompt=negative_prompt,
             num_frames=num_frames,
@@ -413,16 +453,20 @@ def generate_combined(
     
     return combined_result
 
-def handler(event):
+@torch.inference_mode()
+def generate_cartoon(job):
     """
-    RunPod serverless handler function
+    Generate cartoon animation with voice using RunPod serverless
+    Following the working SDXL example pattern
+    """
+    # Debug logging (following working example)
+    import json, pprint
     
-    Args:
-        event: Event dictionary containing 'input' with generation parameters
-        
-    Returns:
-        Dictionary with generation results or error information
-    """
+    print("[generate_cartoon] RAW job dict:")
+    try:
+        print(json.dumps(job, indent=2, default=str), flush=True)
+    except Exception:
+        pprint.pprint(job, depth=4, compact=False)
     
     start_time = time.time()
     
@@ -430,18 +474,22 @@ def handler(event):
         # Setup directories
         setup_directories()
         
-        # Extract input data from the request
-        input_data = event.get("input", {})
-        if not input_data:
-            return {"error": "No input data provided"}
+        # Extract input following working example pattern
+        job_input = job["input"]
+        
+        print("[generate_cartoon] job['input'] payload:")
+        try:
+            print(json.dumps(job_input, indent=2, default=str), flush=True)
+        except Exception:
+            pprint.pprint(job_input, depth=4, compact=False)
         
         # Validate input parameters
-        validated_input = validate_input(input_data)
+        validated_input = validate_input(job_input)
         task_type = validated_input["task_type"]
         
         print(f"🚀 Starting {task_type} generation with validated input")
         
-        # Process the input (replace this with your own code)
+        # Route to appropriate generation function
         if task_type == "animation":
             result = generate_animation(**validated_input)
         elif task_type == "tts":
@@ -451,26 +499,17 @@ def handler(event):
         else:
             return {"error": f"Unknown task_type: {task_type}"}
         
-        # Prepare response with base64 encoded files
+        # Save and upload files (following working example)
+        file_urls = _save_and_upload_files(result, job["id"])
+        
+        # Prepare response
         response = {
             "task_type": task_type,
             "seed": result.get("seed"),
             "generation_time": round(time.time() - start_time, 2),
-            "memory_usage": get_memory_usage()
+            "memory_usage": get_memory_usage(),
+            **file_urls
         }
-        
-        # Encode files to base64
-        if "gif_path" in result:
-            response["gif"] = encode_file_to_base64(result["gif_path"])
-            response["gif_path"] = result["gif_path"]
-        
-        if "mp4_path" in result:
-            response["mp4"] = encode_file_to_base64(result["mp4_path"])
-            response["mp4_path"] = result["mp4_path"]
-        
-        if "audio_path" in result:
-            response["audio"] = encode_file_to_base64(result["audio_path"])
-            response["audio_path"] = result["audio_path"]
         
         # Add metadata
         if "character" in result:
@@ -480,19 +519,15 @@ def handler(event):
         if "dialogue_text" in result:
             response["dialogue_text"] = result["dialogue_text"]
         
-        # Clean up temporary files
-        for path_key in ["gif_path", "mp4_path", "audio_path"]:
-            if path_key in result:
-                try:
-                    os.remove(result[path_key])
-                except Exception:
-                    pass  # Ignore cleanup errors
-        
         print(f"✅ {task_type} generation completed in {response['generation_time']}s")
-        
-        # Return the result
         return response
         
+    except RuntimeError as err:
+        print(f"[ERROR] RuntimeError in generation pipeline: {err}", flush=True)
+        return {
+            "error": f"RuntimeError: {err}",
+            "refresh_worker": True,
+        }
     except Exception as e:
         error_msg = f"Error in {task_type if 'task_type' in locals() else 'unknown'} generation: {str(e)}"
         print(f"❌ {error_msg}")
@@ -506,7 +541,7 @@ def handler(event):
             "memory_usage": get_memory_usage()
         }
 
-# RunPod serverless entry point
+# RunPod serverless entry point (following working example exactly)
 if __name__ == "__main__":
     print("🚀 Starting RunPod Cartoon Animation Worker...")
     print(f"📱 Device: {'CUDA' if torch.cuda.is_available() else 'CPU'}")
@@ -517,7 +552,7 @@ if __name__ == "__main__":
     
     # Start RunPod serverless worker
     if runpod is not None:
-        runpod.serverless.start({"handler": handler})
+        runpod.serverless.start({"handler": generate_cartoon})
     else:
         print("⚠️ RunPod module not available - running in development mode")
         print("✅ Handler function is ready for RunPod deployment") 
