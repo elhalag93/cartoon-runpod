@@ -8,13 +8,13 @@
         "prompt": "temo character walking on moon surface, detailed cartoon style",
         "num_frames": 8,
         "fps": 8,
-        "width": 256,
-        "height": 256,
+        "width": 1024,
+        "height": 1024,
         "guidance_scale": 7.5,
-        "num_inference_steps": 10,
+        "num_inference_steps": 20,
         "seed": 42
       },
-      "timeout": 60000
+      "timeout": 100000
     },
     {
       "name": "test_tts_generation",
@@ -39,8 +39,8 @@
         "dialogue_text": "[S1] Hello everyone! [S2] Nice to meet you!",
         "num_frames": 8,
         "fps": 8,
-        "width": 256,
-        "height": 256,
+        "width": 1024,
+        "height": 1024,
         "guidance_scale": 7.5,
         "num_inference_steps": 10,
         "max_new_tokens": 1024,
@@ -69,8 +69,8 @@
         "prompt": "felfel character exploring magical forest, high quality, detailed",
         "num_frames": 16,
         "fps": 8,
-        "width": 512,
-        "height": 512,
+        "width": 1024,
+        "height": 1024,
         "guidance_scale": 10.0,
         "num_inference_steps": 20,
         "seed": 456

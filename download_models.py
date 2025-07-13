@@ -9,9 +9,10 @@ import subprocess
 MODELS_DIR = pathlib.Path("/workspace/models")
 LORA_DIR = pathlib.Path("/workspace/lora_models")
 
-# Base model URLs (SDXL Turbo + AnimateDiff motion adapter)
+# Base model URLs (SDXL Turbo + AnimateDiff motion adapter + ControlNet)
 SDXL_TURBO_URL = os.getenv("SDXL_TURBO_URL", "https://huggingface.co/stabilityai/sdxl-turbo/resolve/main/sdxl_turbo.safetensors")
 MOTION_ADAPTER_URL = os.getenv("MOTION_ADAPTER_URL", "https://huggingface.co/guoyww/animatediff-motion-adapter-sdxl-beta/resolve/main/diffusion_pytorch_model.safetensors")
+CONTROLNET_URL = os.getenv("CONTROLNET_URL", "https://huggingface.co/diffusers/controlnet-openpose-sdxl-1.0/resolve/main/diffusion_pytorch_model.safetensors")
 
 # LoRA weight URLs – you can override via env vars for private links
 TEMO_LORA_URL = os.getenv("TEMO_LORA_URL")  # required
@@ -28,6 +29,7 @@ DOWNLOADS = [
     # (url, destination path)
     (SDXL_TURBO_URL, MODELS_DIR / "sdxl-turbo" / "sdxl_turbo.safetensors"),
     (MOTION_ADAPTER_URL, MODELS_DIR / "animatediff" / "motion_adapter" / "diffusion_pytorch_model.safetensors"),
+    (CONTROLNET_URL, MODELS_DIR / "controlnet-openpose-sdxl" / "diffusion_pytorch_model.safetensors"),
 ]
 
 if TEMO_LORA_URL:

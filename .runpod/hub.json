@@ -70,22 +70,22 @@
           },
           "fps": {
             "type": "integer",
-            "minimum": 4,
+            "minimum": 8,
             "maximum": 12,
             "default": 8,
             "description": "Frames per second"
           },
           "width": {
             "type": "integer",
-            "minimum": 256,
-            "maximum": 768,
+            "minimum": 768,
+            "maximum": 1024,
             "default": 512,
             "description": "Output width in pixels"
           },
           "height": {
             "type": "integer",
-            "minimum": 256,
-            "maximum": 768,
+            "minimum": 768,
+            "maximum": 1024,
             "default": 512,
             "description": "Output height in pixels"
           },
@@ -119,9 +119,9 @@
           },
           "num_inference_steps": {
             "type": "integer",
-            "minimum": 10,
+            "minimum": 20,
             "maximum": 30,
-            "default": 15,
+            "default": 21,
             "description": "Number of inference steps"
           },
           "seed": {
