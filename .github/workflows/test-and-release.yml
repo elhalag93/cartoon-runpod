@@ -66,9 +66,11 @@ jobs:
         pip install safetensors>=0.5.3
         pip install numpy>=1.24.0
         pip install pillow>=10.0.0
+        pip install opencv-python>=4.8.0
         pip install soundfile>=0.13.1
         pip install requests>=2.31.0
         pip install pydantic>=2.11.3
+        pip install controlnet-aux>=0.0.7
         pip install tqdm
         
         echo "✅ All dependencies installed successfully!"
@@ -217,7 +219,7 @@ jobs:
         python -m pip install --upgrade pip
         pip install torch --index-url https://download.pytorch.org/whl/cpu
         pip install transformers diffusers runpod
-        pip install soundfile numpy pillow
+        pip install soundfile numpy pillow opencv-python controlnet-aux
     
     - name: Validate RunPod configuration
       run: |
