@@ -107,22 +107,27 @@ jobs:
         # Test handler import and basic functionality
         python -c "
         import sys
-        sys.path.append('src')
+        import os
+        
+        # Add src to path and avoid circular import
+        sys.path.insert(0, 'src')
         
         try:
-            # Test handler import
-            from handler import handler
-            print('✅ Handler function imports successfully')
-            print(f'✅ Handler is callable: {callable(handler)}')
+            # Import from src.handler module to avoid circular import
+            import handler as src_handler
+            handler_func = src_handler.handler
+            
+            print('✅ Handler function imports successfully from src/handler.py')
+            print(f'✅ Handler is callable: {callable(handler_func)}')
             
             # Test handler with minimal input (should handle gracefully even without models)
             test_job = {'input': {'task_type': 'animation', 'character': 'temo', 'prompt': 'test'}}
-            result = handler(test_job)
+            result = handler_func(test_job)
             
             if isinstance(result, dict):
                 print('✅ Handler returns proper dictionary format')
                 if 'error' in result:
-                    print(f'ℹ️ Handler error (expected in CI without models): OK')
+                    print('ℹ️ Handler error (expected in CI without models): OK')
                 else:
                     print('✅ Handler executed successfully')
             else:
@@ -245,7 +250,8 @@ jobs:
         test -f .runpod/config.yaml && echo "✅ config.yaml exists"
         test -f .runpod/hub.json && echo "✅ hub.json exists"
         test -f .runpod/tests.json && echo "✅ tests.json exists"
-        test -f src/handler.py && echo "✅ handler.py exists"
+        test -f src/handler.py && echo "✅ src/handler.py exists"
+        test -f handler.py && echo "✅ handler.py (RunPod entry point) exists"
         test -f Dockerfile && echo "✅ Dockerfile exists"
         
         # Validate JSON syntax
@@ -257,11 +263,12 @@ jobs:
         echo "Validating handler function..."
         python -c "
         import sys
-        sys.path.append('src')
+        sys.path.insert(0, 'src')
         try:
-            from handler import handler
-            print('✅ Handler function found and importable')
-            print(f'✅ Handler is callable: {callable(handler)}')
+            import handler as src_handler
+            handler_func = src_handler.handler
+            print('✅ Handler function found and importable from src/handler.py')
+            print(f'✅ Handler is callable: {callable(handler_func)}')
         except Exception as e:
             print(f'❌ Handler validation failed: {e}')
             sys.exit(1)
