@@ -107,7 +107,7 @@ jobs:
                 failed_imports.append(display_name)
         
         if failed_imports:
-            print(f'❌ Failed to import: {', '.join(failed_imports)}')
+            print('❌ Failed to import: ' + ', '.join(failed_imports))
             sys.exit(1)
         else:
             print('✅ All required modules imported successfully')
