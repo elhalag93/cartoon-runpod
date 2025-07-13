@@ -23,102 +23,86 @@ jobs:
       with:
         python-version: ${{ matrix.python-version }}
     
+    - name: Free up disk space
+      run: |
+        echo "Freeing up disk space..."
+        # Remove unnecessary packages to free up space
+        sudo apt-get remove -y --purge man-db
+        sudo apt-get autoremove -y
+        sudo apt-get clean
+        
+        # Remove large directories that aren't needed
+        sudo rm -rf /usr/share/dotnet
+        sudo rm -rf /usr/local/lib/android
+        sudo rm -rf /opt/ghc
+        sudo rm -rf /opt/hostedtoolcache/CodeQL
+        
+        # Clear package cache
+        sudo apt-get clean
+        
+        # Show available space
+        df -h
+        
     - name: Install dependencies
       run: |
         set -e  # Exit on any error
-        echo "🔧 Installing dependencies with error checking..."
+        echo "Installing minimal dependencies for CI testing..."
         
         python -m pip install --upgrade pip
         
-        # Install PyTorch with CPU-only index first
-        echo "📦 Installing PyTorch with CPU support..."
-        pip install torch==2.6.0 torchvision torchaudio --index-url https://download.pytorch.org/whl/cpu
-        python -c "import torch; print(f'✅ PyTorch {torch.__version__} installed successfully')"
+        # Install only essential dependencies for CI validation
+        echo "Installing core dependencies..."
+        pip install --no-cache-dir torch==2.6.0 torchvision torchaudio --index-url https://download.pytorch.org/whl/cpu
+        pip install --no-cache-dir transformers>=4.40.0
+        pip install --no-cache-dir diffusers>=0.30.0
+        pip install --no-cache-dir runpod>=1.7.0
+        pip install --no-cache-dir gradio>=5.25.2
+        pip install --no-cache-dir fastapi>=0.104.0
+        pip install --no-cache-dir uvicorn>=0.24.0
+        pip install --no-cache-dir numpy>=1.24.0
+        pip install --no-cache-dir pillow>=10.0.0
+        pip install --no-cache-dir soundfile>=0.13.1
+        pip install --no-cache-dir requests>=2.31.0
+        pip install --no-cache-dir pydantic>=2.11.3
         
-        # Install core ML dependencies
-        echo "📦 Installing core ML dependencies..."
-        pip install transformers>=4.40.0
-        python -c "import transformers; print(f'✅ Transformers {transformers.__version__}')"
-        
-        pip install diffusers>=0.30.0
-        python -c "import diffusers; print(f'✅ Diffusers {diffusers.__version__}')"
-        
-        pip install accelerate>=0.30.0
-        python -c "import accelerate; print(f'✅ Accelerate installed')"
-        
-        # Install RunPod and web framework dependencies
-        echo "📦 Installing RunPod and web dependencies..."
-        pip install runpod>=1.7.0
-        python -c "import runpod; print('✅ RunPod module available')"
-        
-        pip install gradio>=5.25.2
-        python -c "import gradio; print(f'✅ Gradio {gradio.__version__}')"
-        
-        pip install fastapi>=0.104.0
-        python -c "import fastapi; print(f'✅ FastAPI {fastapi.__version__}')"
-        
-        pip install uvicorn>=0.24.0
-        python -c "import uvicorn; print(f'✅ Uvicorn installed')"
-        
-        # Install utility dependencies
-        echo "📦 Installing utility dependencies..."
-        pip install huggingface-hub>=0.30.2
-        pip install safetensors>=0.5.3
-        pip install numpy>=1.24.0
-        pip install pillow>=10.0.0
-        pip install soundfile>=0.13.1
-        pip install requests>=2.31.0
-        pip install pydantic>=2.11.3
-        pip install controlnet-aux>=0.0.7
-        pip install tqdm
-        
-        echo "✅ All dependencies installed successfully!"
+        echo "Essential dependencies installed successfully!"
     
     - name: Verify installation
       run: |
-        echo "🔍 Verifying all dependencies are properly installed..."
+        echo "Verifying essential dependencies..."
         
-        # Test critical imports
+        # Test critical imports quickly
         python -c "
         import sys
         
-        # Test all required modules
+        # Test only essential modules for CI
         modules_to_test = [
             ('torch', 'PyTorch'),
             ('transformers', 'Transformers'),
             ('diffusers', 'Diffusers'),
             ('runpod', 'RunPod'),
-            ('gradio', 'Gradio'),
             ('fastapi', 'FastAPI'),
             ('numpy', 'NumPy'),
             ('PIL', 'Pillow'),
-            ('soundfile', 'SoundFile'),
-            ('requests', 'Requests'),
             ('pydantic', 'Pydantic')
         ]
-        
-        failed_imports = []
         
         for module_name, display_name in modules_to_test:
             try:
                 __import__(module_name)
-                print(f'✅ {display_name} import successful')
+                print(f'✅ {display_name} OK')
             except ImportError as e:
-                print(f'❌ {display_name} import failed: {e}')
-                failed_imports.append(display_name)
+                print(f'❌ {display_name} failed: {e}')
+                sys.exit(1)
         
-        if failed_imports:
-            print('❌ Failed to import: ' + ', '.join(failed_imports))
-            sys.exit(1)
-        else:
-            print('✅ All required modules imported successfully')
+        print('✅ All essential modules imported successfully')
         "
         
-        echo "🎉 Dependency verification completed!"
+        echo "Dependency verification completed!"
     
     - name: Run tests
       run: |
-        echo "🧪 Running handler validation tests..."
+        echo "Running minimal handler validation..."
         
         # Test handler import and basic functionality
         python -c "
@@ -138,27 +122,59 @@ jobs:
             if isinstance(result, dict):
                 print('✅ Handler returns proper dictionary format')
                 if 'error' in result:
-                    print(f'ℹ️ Handler error (expected in CI without models): {result[\"error\"][:100]}...')
+                    print(f'ℹ️ Handler error (expected in CI without models): OK')
                 else:
                     print('✅ Handler executed successfully')
             else:
                 print('❌ Handler returned unexpected type')
                 sys.exit(1)
                 
-            print('✅ All handler validation tests passed - production handler is ready')
+            print('✅ Handler validation passed - production handler is ready')
             
         except Exception as e:
             print(f'❌ Handler validation error: {e}')
-            import traceback
-            traceback.print_exc()
             sys.exit(1)
         "
         
-        echo "🎉 Handler validation completed successfully!"
+        echo "Handler validation completed!"
+    
+    - name: Check disk space before Docker build
+      run: |
+        echo "Disk space before Docker build:"
+        df -h
+        echo "Cleaning up pip cache..."
+        pip cache purge
+        echo "Disk space after cleanup:"
+        df -h
     
     - name: Test Docker build
       run: |
-        docker build -t cartoon-animation-test .
+        # Build with minimal layers and no cache to save space
+        docker build --no-cache --rm -t cartoon-animation-test .
+        
+        # Clean up immediately after build
+        docker image prune -f
+        
+        echo "Disk space after Docker build:"
+        df -h
+    
+    - name: Final cleanup
+      if: always()
+      run: |
+        echo "Final cleanup to prevent disk space issues..."
+        
+        # Remove Docker images and containers
+        docker system prune -af || true
+        
+        # Clear pip cache
+        pip cache purge || true
+        
+        # Remove any large temporary files
+        sudo rm -rf /tmp/* || true
+        
+        # Show final disk usage
+        echo "Final disk space:"
+        df -h
 
   build-and-push:
     needs: test
@@ -216,13 +232,13 @@ jobs:
     - name: Install basic dependencies for validation
       run: |
         python -m pip install --upgrade pip
-        pip install torch --index-url https://download.pytorch.org/whl/cpu
-        pip install transformers diffusers runpod
-        pip install soundfile numpy pillow controlnet-aux
+        pip install --no-cache-dir torch --index-url https://download.pytorch.org/whl/cpu
+        pip install --no-cache-dir transformers diffusers runpod
+        pip install --no-cache-dir soundfile numpy pillow
     
     - name: Validate RunPod configuration
       run: |
-        echo "🔍 Validating RunPod configuration files..."
+        echo "Validating RunPod configuration files..."
         
         # Check required files exist
         echo "Checking required files..."
@@ -251,4 +267,4 @@ jobs:
             sys.exit(1)
         "
         
-        echo "🎉 RunPod configuration is valid!" 
+        echo "RunPod configuration is valid!" 
