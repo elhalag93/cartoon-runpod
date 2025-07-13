@@ -1,0 +1,35 @@
+# Cartoon Animation Worker Dependencies
+# Core ML/AI frameworks
+torch==2.6.0
+torchaudio==2.6.0
+torchvision>=0.17.0
+transformers>=4.40.0
+diffusers>=0.30.0
+accelerate>=0.30.0
+
+# RunPod and web frameworks
+runpod>=1.7.0
+gradio>=5.25.2
+fastapi>=0.104.0
+uvicorn>=0.24.0
+
+# Hugging Face and model utilities
+huggingface-hub>=0.30.2
+safetensors>=0.5.3
+
+# Core Python libraries
+numpy>=1.24.0
+pillow>=10.0.0
+requests>=2.31.0
+pydantic>=2.11.3
+
+# Audio processing
+soundfile>=0.13.1
+descript-audio-codec>=1.0.0
+
+# Additional utilities
+tqdm
+gdown
+
+# Performance optimizations (optional)
+# xformers>=0.0.20  # Commented out as it can be problematic in some environments 
