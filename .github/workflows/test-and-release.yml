@@ -217,6 +217,7 @@ jobs:
         python -m pip install --upgrade pip
         pip install torch --index-url https://download.pytorch.org/whl/cpu
         pip install transformers diffusers runpod
+        pip install soundfile numpy pillow
     
     - name: Validate RunPod configuration
       run: |
