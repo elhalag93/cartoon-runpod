@@ -52,18 +52,18 @@ jobs:
         
         # Install only essential dependencies for CI validation
         echo "Installing core dependencies..."
-        pip install --no-cache-dir torch==2.6.0 torchvision torchaudio --index-url https://download.pytorch.org/whl/cpu
-        pip install --no-cache-dir transformers>=4.40.0
-        pip install --no-cache-dir diffusers>=0.30.0
+        pip install --no-cache-dir torch==2.1.0+cpu torchvision==0.16.0+cpu torchaudio==2.1.0+cpu --index-url https://download.pytorch.org/whl/cpu
+        pip install --no-cache-dir transformers>=4.35.0
+        pip install --no-cache-dir diffusers>=0.24.0
         pip install --no-cache-dir runpod>=1.7.0
-        pip install --no-cache-dir gradio>=5.25.2
+        pip install --no-cache-dir gradio>=4.0.0
         pip install --no-cache-dir fastapi>=0.104.0
         pip install --no-cache-dir uvicorn>=0.24.0
         pip install --no-cache-dir numpy>=1.24.0
         pip install --no-cache-dir pillow>=10.0.0
-        pip install --no-cache-dir soundfile>=0.13.1
+        pip install --no-cache-dir soundfile>=0.12.0
         pip install --no-cache-dir requests>=2.31.0
-        pip install --no-cache-dir pydantic>=2.11.3
+        pip install --no-cache-dir pydantic>=2.5.0
         
         echo "Essential dependencies installed successfully!"
     
