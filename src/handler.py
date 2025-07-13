@@ -45,11 +45,20 @@ dia_processor = None
 animation_pipeline = None
 motion_adapter = None
 
-# Configuration
-MODELS_DIR = Path("/workspace/models")
-LORA_DIR = Path("/workspace/lora_models")
-OUTPUT_DIR = Path("/workspace/outputs")
-TEMP_DIR = Path("/workspace/temp")
+# Configuration - use different paths for local testing vs RunPod
+if os.getenv("RUNPOD_POD_ID") or os.getenv("RUNPOD_ENDPOINT_ID"):
+    # Running on RunPod
+    MODELS_DIR = Path("/workspace/models")
+    LORA_DIR = Path("/workspace/lora_models")
+    OUTPUT_DIR = Path("/workspace/outputs")
+    TEMP_DIR = Path("/workspace/temp")
+else:
+    # Running locally or in CI
+    project_root = Path(__file__).parent.parent
+    MODELS_DIR = project_root / "models"
+    LORA_DIR = project_root / "lora_models"
+    OUTPUT_DIR = project_root / "outputs"
+    TEMP_DIR = project_root / "temp"
 
 # Model configuration
 DIA_MODEL_CHECKPOINT = "nari-labs/Dia-1.6B-0626"

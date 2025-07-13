@@ -31,6 +31,9 @@ jobs:
     
     - name: Run tests
       run: |
+        # Set environment for CI testing
+        export CI_TESTING=true
+        export TESTING=true
         python run_tests.py
     
     - name: Test Docker build
