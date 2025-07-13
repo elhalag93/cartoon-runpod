@@ -186,5 +186,9 @@
         "seed": 84
       }
     }
-  ]
+  ],
+  "handler": {
+    "file": "handler.py",
+    "function": "handler"
+  }
 } 

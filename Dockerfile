@@ -31,6 +31,9 @@ ENV INTERFACE_MODE=web
 ENV HOST=0.0.0.0
 ENV PORT=7860
 
-# Set entrypoint to use the launcher
-ENTRYPOINT ["python", "launch.py"]
-CMD ["web"] 
+# Set entrypoint based on deployment mode
+# For RunPod serverless: python handler.py
+# For web interface: python launch.py web
+# For API server: python launch.py api
+ENTRYPOINT ["python"]
+CMD ["handler.py"] 

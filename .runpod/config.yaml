@@ -28,4 +28,8 @@ resources:
 
 environment:
   PYTHONPATH: "/workspace"
-  RUNPOD_DEBUG: "false" 
+  RUNPOD_DEBUG: "false"
+
+handler:
+  file: "handler.py"
+  function: "handler" 
