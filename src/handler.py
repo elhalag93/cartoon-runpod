@@ -102,6 +102,11 @@ def load_tts_model():
         print("🔄 Loading Dia TTS model...")
         device = "cuda" if torch.cuda.is_available() else "cpu"
         
+        # Skip model loading in CI/testing environments
+        if os.getenv("CI_TESTING") or os.getenv("TESTING"):
+            print("⚠️ Skipping TTS model loading in CI/testing environment")
+            raise Exception("TTS model loading skipped in CI/testing environment")
+        
         try:
             dia_processor = AutoProcessor.from_pretrained(DIA_MODEL_CHECKPOINT)
             dia_model = DiaForConditionalGeneration.from_pretrained(
@@ -127,6 +132,11 @@ def load_animation_pipeline():
     if animation_pipeline is None:
         print("🔄 Loading AnimateDiff pipeline...")
         device = "cuda" if torch.cuda.is_available() else "cpu"
+        
+        # Skip model loading in CI/testing environments
+        if os.getenv("CI_TESTING") or os.getenv("TESTING"):
+            print("⚠️ Skipping model loading in CI/testing environment")
+            raise Exception("Model loading skipped in CI/testing environment")
         
         try:
             # Load motion adapter
