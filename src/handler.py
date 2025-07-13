@@ -67,7 +67,7 @@ else:
 # Model configuration
 DIA_MODEL_CHECKPOINT = "nari-labs/Dia-1.6B-0626"
 SDXL_MODEL_ID = "stabilityai/sdxl-turbo"
-MOTION_ADAPTER_ID = "animatediff/animatediff-motion-adapter-v1"
+MOTION_ADAPTER_ID = "guoyww/animatediff-motion-adapter-sdxl-beta"
 
 # Supported characters
 SUPPORTED_CHARACTERS = ["temo", "felfel"]

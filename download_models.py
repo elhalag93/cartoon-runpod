@@ -11,7 +11,7 @@ LORA_DIR = pathlib.Path("/workspace/lora_models")
 
 # Base model URLs (SDXL Turbo + AnimateDiff motion adapter)
 SDXL_TURBO_URL = os.getenv("SDXL_TURBO_URL", "https://huggingface.co/stabilityai/sdxl-turbo/resolve/main/sdxl_turbo.safetensors")
-MOTION_ADAPTER_URL = os.getenv("MOTION_ADAPTER_URL", "https://huggingface.co/animatediff/animatediff-motion-adapter-v1/resolve/main/diffusion_pytorch_model.safetensors")
+MOTION_ADAPTER_URL = os.getenv("MOTION_ADAPTER_URL", "https://huggingface.co/guoyww/animatediff-motion-adapter-sdxl-beta/resolve/main/diffusion_pytorch_model.safetensors")
 
 # LoRA weight URLs – you can override via env vars for private links
 TEMO_LORA_URL = os.getenv("TEMO_LORA_URL")  # required
