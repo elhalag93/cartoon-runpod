@@ -118,44 +118,35 @@ jobs:
         # Test handler import and basic functionality
         python -c "
         import sys
-        import os
         
+        # Test handler import
         try:
-            # Import from root handler.py (the correct RunPod entry point)
             from handler import generate_cartoon
-            
             print('✅ Handler function imports successfully from handler.py')
             print(f'✅ Handler is callable: {callable(generate_cartoon)}')
-            
-                    # Test basic handler validation (no model loading in CI)
-        print('🧪 Testing handler validation in CI environment...')
+        except Exception as e:
+            print(f'❌ Handler import failed: {e}')
+            sys.exit(1)
         
-        # Test import and basic structure
+        # Test basic validation (expected to fail gracefully in CI)
+        print('🧪 Testing handler validation in CI environment...')
         test_job = {'input': {'task_type': 'animation', 'character': 'temo', 'prompt': 'test'}, 'id': 'test-job-123'}
         
-        # In CI, we expect this to fail gracefully due to missing models/workspace
         try:
             result = generate_cartoon(test_job)
-            
             if isinstance(result, dict):
                 print('✅ Handler returns proper dictionary format')
                 if 'error' in result:
-                    print('ℹ️ Handler error (expected in CI without models/workspace): OK')
-                    print(f'ℹ️ Error message: {result.get(\"error\", \"N/A\")[:100]}...')
+                    print('ℹ️ Handler error (expected in CI): OK')
                 else:
-                    print('✅ Handler executed successfully (unexpected in CI)')
+                    print('✅ Handler executed successfully')
             else:
                 print('❌ Handler returned unexpected type')
                 sys.exit(1)
         except Exception as e:
-            # Expected in CI environment
             print(f'ℹ️ Handler exception (expected in CI): {str(e)[:100]}...')
-            
+        
         print('✅ Handler validation passed - production handler is ready')
-            
-        except Exception as e:
-            print(f'❌ Handler validation error: {e}')
-            sys.exit(1)
         "
         
         echo "Handler validation completed!"
