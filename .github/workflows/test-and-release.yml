@@ -27,29 +27,37 @@ jobs:
       run: |
         python -m pip install --upgrade pip
         pip install torch torchvision torchaudio --index-url https://download.pytorch.org/whl/cpu
-        pip install -r requirements.txt || pip install torch diffusers transformers runpod numpy pillow soundfile tqdm requests gradio fastapi uvicorn accelerate
+        pip install diffusers transformers runpod numpy pillow soundfile tqdm requests gradio fastapi uvicorn accelerate
+        pip install -r requirements.txt || echo "requirements.txt installation failed, using fallback packages"
     
     - name: Run tests
       run: |
-        # Run basic tests (skip model-dependent tests in CI)
+        # Run basic validation tests with proper dependency handling
         echo "Running basic validation tests..."
         python -c "
         import sys
         sys.path.append('src')
         try:
+            # Test that all required modules can be imported
+            import torch
+            import diffusers
+            import transformers
+            import runpod
+            print('✅ All required dependencies are available')
+            
+            # Test handler import
             from handler import handler
             print('✅ Handler function imports successfully')
+            print(f'✅ Handler is callable: {callable(handler)}')
+            
         except ImportError as e:
-            print(f'⚠️ Handler import warning: {e}')
-            print('✅ Handler file exists and is syntactically correct')
+            print(f'❌ Import error: {e}')
+            sys.exit(1)
+        except Exception as e:
+            print(f'❌ Unexpected error: {e}')
+            sys.exit(1)
         "
-        python -c "
-        import sys
-        sys.path.append('src')
-        import handler
-        print('✅ All handler functions exist')
-        "
-        echo "✅ Basic tests passed - production handler is ready"
+        echo "✅ All validation tests passed - production handler is ready"
     
     - name: Test Docker build
       run: |
