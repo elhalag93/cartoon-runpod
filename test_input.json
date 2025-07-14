@@ -1,19 +1,160 @@
 {
-  "input": {
-    "task_type": "combined",
-    "character": "temo",
-    "prompt": "temo character walking confidently on moon surface with epic cinematic lighting, detailed cartoon style, space helmet reflecting Earth, dramatic lunar landscape with deep craters and distant stars, smooth fluid animation, masterpiece quality, ultra detailed, perfect anatomy, dynamic pose, professional animation, 4K quality, studio lighting, perfect composition",
-    "dialogue_text": "[S1] Temo is exploring the magnificent lunar surface with unprecedented detail! [S2] Look at that breathtaking ultra-high-definition view of Earth from here. [S1] (gasps in wonder) This is absolutely incredible! The craters stretch endlessly in perfect clarity. [S2] Every step reveals new mysteries of this ancient world in stunning 4K quality.",
-    "num_frames": 48,
-    "fps": 16,
-    "guidance_scale": 15.0,
-    "num_inference_steps": 50,
-    "seed": 42,
-    "max_new_tokens": 6144,
-    "tts_guidance_scale": 6.0,
-    "temperature": 1.2,
-    "height": 1024,
-    "width": 1024,
-    "negative_prompt": "blurry, low quality, distorted, deformed, ugly, bad anatomy, disfigured, poorly drawn face, mutation, mutated, extra limb, ugly, disgusting, poorly drawn hands, missing limb, floating limbs, disconnected limbs, malformed hands, blurry, ((((mutated hands and fingers)))), watermark, watermarked, oversaturated, censored, distorted hands, amputation, missing hands, obese, doubled face, double hands, bad proportions, gross proportions, short arm, missing arms, missing legs, extra digit, extra arms, extra leg, extra foot, ((repeating hair)), pixelated, low resolution, compressed, artifacts, noise, grain, poor lighting"
-  }
+  "production_tests": {
+    "ultra_quality_combined": {
+      "input": {
+        "task_type": "combined",
+        "character": "temo",
+        "prompt": "temo character walking confidently on moon surface with epic cinematic lighting, detailed cartoon style, space helmet reflecting Earth, dramatic lunar landscape with deep craters and distant stars, smooth fluid animation, masterpiece quality, ultra detailed, perfect anatomy, dynamic pose, professional animation, 4K quality, studio lighting, perfect composition",
+        "dialogue_text": "[S1] Temo is exploring the magnificent lunar surface with unprecedented detail! [S2] Look at that breathtaking ultra-high-definition view of Earth from here. [S1] (gasps in wonder) This is absolutely incredible! The craters stretch endlessly in perfect clarity. [S2] Every step reveals new mysteries of this ancient world in stunning 4K quality.",
+        "num_frames": 48,
+        "fps": 16,
+        "guidance_scale": 15.0,
+        "num_inference_steps": 50,
+        "seed": 42,
+        "max_new_tokens": 6144,
+        "tts_guidance_scale": 6.0,
+        "temperature": 1.2,
+        "height": 1024,
+        "width": 1024,
+        "negative_prompt": "blurry, low quality, distorted, deformed, ugly, bad anatomy, disfigured, poorly drawn face, mutation, mutated, extra limb, ugly, disgusting, poorly drawn hands, missing limb, floating limbs, disconnected limbs, malformed hands, blurry, ((((mutated hands and fingers)))), watermark, watermarked, oversaturated, censored, distorted hands, amputation, missing hands, obese, doubled face, double hands, bad proportions, gross proportions, short arm, missing arms, missing legs, extra digit, extra arms, extra leg, extra foot, ((repeating hair)), pixelated, low resolution, compressed, artifacts, noise, grain, poor lighting"
+      }
+    },
+    "high_quality_animation": {
+      "input": {
+        "task_type": "animation",
+        "character": "felfel",
+        "prompt": "felfel character discovering magical crystal cave with epic lighting, ultra detailed cartoon style, masterpiece quality, perfect anatomy, dynamic exploration pose, professional animation, cinematic composition, sparkling crystals, mystical atmosphere",
+        "num_frames": 32,
+        "fps": 16,
+        "width": 1024,
+        "height": 1024,
+        "guidance_scale": 12.0,
+        "num_inference_steps": 45,
+        "seed": 168,
+        "negative_prompt": "blurry, low quality, distorted, deformed, ugly, bad anatomy, disfigured, poorly drawn face, mutation, mutated, extra limb, watermark, oversaturated, bad proportions"
+      }
+    },
+    "premium_tts": {
+      "input": {
+        "task_type": "tts",
+        "dialogue_text": "[S1] Welcome to the ultra high quality text-to-speech system with crystal clear audio generation! [S2] Listen to the professional-grade voice synthesis with perfect pronunciation and natural intonation. [S1] (speaks with excitement) This is absolutely amazing technology that delivers studio-quality results! [S2] (chuckles warmly) Every word is rendered with incredible clarity and emotional depth.",
+        "max_new_tokens": 5120,
+        "tts_guidance_scale": 5.5,
+        "temperature": 1.3,
+        "top_p": 0.92,
+        "top_k": 65,
+        "seed": 256
+      }
+    },
+    "standard_animation": {
+      "input": {
+        "task_type": "animation",
+        "character": "temo",
+        "prompt": "temo character waving hello from space station, detailed cartoon style, smooth animation",
+        "num_frames": 24,
+        "fps": 12,
+        "width": 768,
+        "height": 768,
+        "guidance_scale": 9.0,
+        "num_inference_steps": 30,
+        "seed": 84
+      }
+    },
+    "quick_test": {
+      "input": {
+        "task_type": "combined",
+        "character": "felfel",
+        "prompt": "felfel character simple wave animation, cartoon style",
+        "dialogue_text": "[S1] Quick test animation! [S2] Simple and fast generation.",
+        "num_frames": 12,
+        "fps": 8,
+        "width": 512,
+        "height": 512,
+        "guidance_scale": 7.5,
+        "num_inference_steps": 20,
+        "max_new_tokens": 2048,
+        "tts_guidance_scale": 3.5,
+        "temperature": 1.6,
+        "seed": 999
+      }
+    },
+    "minimum_viable": {
+      "input": {
+        "task_type": "animation",
+        "character": "temo",
+        "prompt": "temo character basic movement",
+        "num_frames": 8,
+        "fps": 8,
+        "width": 512,
+        "height": 512,
+        "guidance_scale": 7.0,
+        "num_inference_steps": 15,
+        "seed": 123
+      }
+    }
+  },
+  "embedded_ci_tests": [
+    {
+      "name": "animation_production_test",
+      "input": {
+        "task_type": "animation",
+        "character": "temo",
+        "prompt": "temo character walking on moon surface, detailed cartoon style, epic cinematic lighting",
+        "num_frames": 16,
+        "fps": 12,
+        "width": 768,
+        "height": 768,
+        "guidance_scale": 9.0,
+        "num_inference_steps": 25,
+        "seed": 42
+      }
+    },
+    {
+      "name": "tts_production_test",
+      "input": {
+        "task_type": "tts",
+        "dialogue_text": "[S1] Welcome to the ultra high quality TTS system! [S2] This is a production test with crystal clear audio generation.",
+        "max_new_tokens": 3072,
+        "tts_guidance_scale": 4.0,
+        "temperature": 1.5,
+        "top_p": 0.9,
+        "top_k": 50,
+        "seed": 84
+      }
+    },
+    {
+      "name": "combined_ultra_quality_test",
+      "input": {
+        "task_type": "combined",
+        "character": "felfel",
+        "prompt": "felfel character exploring magical crystal cave with epic cinematic lighting, ultra detailed cartoon style, masterpiece quality, perfect anatomy, dynamic pose, professional animation",
+        "dialogue_text": "[S1] Felfel discovers an incredible crystal cave with ultra high quality visuals! [S2] Look at these magnificent formations sparkling in the light. [S1] (gasps in wonder) This is absolutely breathtaking in 4K quality!",
+        "num_frames": 24,
+        "fps": 16,
+        "width": 1024,
+        "height": 1024,
+        "guidance_scale": 12.0,
+        "num_inference_steps": 40,
+        "max_new_tokens": 4096,
+        "tts_guidance_scale": 5.0,
+        "temperature": 1.4,
+        "seed": 168
+      }
+    },
+    {
+      "name": "edge_case_test",
+      "input": {
+        "task_type": "animation",
+        "character": "temo",
+        "prompt": "temo character with complex lighting and detailed background",
+        "num_frames": 8,
+        "fps": 8,
+        "width": 512,
+        "height": 512,
+        "guidance_scale": 7.5,
+        "num_inference_steps": 15,
+        "seed": 999
+      }
+    }
+  ]
 } 
