@@ -1,5 +1,57 @@
 {
   "production_tests": {
+    "multi_character_ultra_quality": {
+      "input": {
+        "task_type": "combined",
+        "characters": ["temo", "felfel"],
+        "prompt": "temo and felfel characters standing together on moon surface, both characters clearly visible, temo in space suit on left, felfel in adventure gear on right, epic cinematic lighting, detailed cartoon style, space helmet reflecting Earth, dramatic lunar landscape, smooth fluid animation, masterpiece quality, ultra detailed, perfect anatomy, dynamic poses, professional animation, 4K quality, studio lighting, perfect composition, two characters interacting",
+        "dialogue_text": "[S1] Temo and Felfel are exploring the magnificent lunar surface together with unprecedented detail! [S2] Look at that breathtaking ultra-high-definition view of Earth from here. [S1] (gasps in wonder) This is absolutely incredible! The craters stretch endlessly in perfect clarity. [S2] (Felfel chuckles) Together we can explore every corner of this ancient world in stunning 4K quality!",
+        "num_frames": 48,
+        "fps": 16,
+        "guidance_scale": 15.0,
+        "num_inference_steps": 50,
+        "seed": 42,
+        "max_new_tokens": 6144,
+        "tts_guidance_scale": 6.0,
+        "temperature": 1.2,
+        "height": 1024,
+        "width": 1024,
+        "negative_prompt": "blurry, low quality, distorted, deformed, ugly, bad anatomy, disfigured, poorly drawn face, mutation, mutated, extra limb, ugly, disgusting, poorly drawn hands, missing limb, floating limbs, disconnected limbs, malformed hands, blurry, ((((mutated hands and fingers)))), watermark, watermarked, oversaturated, censored, distorted hands, amputation, missing hands, obese, doubled face, double hands, bad proportions, gross proportions, short arm, missing arms, missing legs, extra digit, extra arms, extra leg, extra foot, ((repeating hair)), pixelated, low resolution, compressed, artifacts, noise, grain, poor lighting"
+      }
+    },
+    "multi_character_interaction": {
+      "input": {
+        "task_type": "animation",
+        "characters": ["temo", "felfel"],
+        "prompt": "temo and felfel characters working together to discover magical crystal cave, both characters clearly visible, temo using space technology on left, felfel using adventure skills on right, epic lighting, ultra detailed cartoon style, masterpiece quality, perfect anatomy, dynamic interaction poses, professional animation, cinematic composition, sparkling crystals, mystical atmosphere, two characters collaboration",
+        "num_frames": 32,
+        "fps": 16,
+        "width": 1024,
+        "height": 1024,
+        "guidance_scale": 12.0,
+        "num_inference_steps": 45,
+        "seed": 168,
+        "negative_prompt": "blurry, low quality, distorted, deformed, ugly, bad anatomy, disfigured, poorly drawn face, mutation, mutated, extra limb, watermark, oversaturated, bad proportions, single character, one character"
+      }
+    },
+    "dual_character_dialogue": {
+      "input": {
+        "task_type": "combined",
+        "characters": ["temo", "felfel"],
+        "prompt": "temo and felfel characters having conversation on space station, both visible, temo floating in zero gravity on left, felfel standing on platform on right, detailed cartoon style, professional animation",
+        "dialogue_text": "[S1] Temo speaking: Welcome to our amazing space station, Felfel! [S2] Felfel responding: Thank you for showing me around, Temo! This is incredible technology. [S1] (Temo laughs) Together we can explore the entire galaxy! [S2] (Felfel agrees enthusiastically) What an amazing adventure we'll have!",
+        "num_frames": 24,
+        "fps": 16,
+        "width": 1024,
+        "height": 1024,
+        "guidance_scale": 12.0,
+        "num_inference_steps": 40,
+        "max_new_tokens": 4096,
+        "tts_guidance_scale": 5.0,
+        "temperature": 1.4,
+        "seed": 256
+      }
+    },
     "ultra_quality_combined": {
       "input": {
         "task_type": "combined",

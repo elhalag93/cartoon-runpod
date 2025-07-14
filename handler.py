@@ -11,7 +11,7 @@ import json
 import base64
 import tempfile
 import traceback
-from typing import Dict, Any, Optional
+from typing import Dict, Any, Optional, Union, List
 from pathlib import Path
 
 try:
@@ -244,26 +244,52 @@ class ModelHandler:
 # Initialize models globally (following working example pattern)
 MODELS = ModelHandler()
 
-def load_lora_weights(pipeline, character: str):
-    """Load LoRA weights for specific character"""
+def load_lora_weights(pipeline, characters: Union[str, List[str]]):
+    """Load LoRA weights for single or multiple characters"""
     try:
         # Unload any existing LoRA weights
         pipeline.unload_lora_weights()
         clear_memory()
         
-        # Load character-specific LoRA
-        lora_path = LORA_DIR / f"{character}_lora"
-        if not lora_path.exists():
-            raise FileNotFoundError(f"LoRA weights not found for character '{character}' at {lora_path}")
+        # Handle single character (backward compatibility)
+        if isinstance(characters, str):
+            characters = [characters]
         
-        pipeline.load_lora_weights(
-            str(lora_path),
-            weight_name="deep_sdxl_turbo_lora_weights.pt"
-        )
+        # Load multiple character LoRAs
+        lora_weights = {}
+        adapter_names = []
         
-        print(f"✅ LoRA weights loaded for character: {character}")
+        for character in characters:
+            lora_path = LORA_DIR / f"{character}_lora"
+            if not lora_path.exists():
+                raise FileNotFoundError(f"LoRA weights not found for character '{character}' at {lora_path}")
+            
+            # Load each character's LoRA with unique adapter name
+            adapter_name = f"{character}_adapter"
+            pipeline.load_lora_weights(
+                str(lora_path),
+                weight_name="deep_sdxl_turbo_lora_weights.pt",
+                adapter_name=adapter_name
+            )
+            adapter_names.append(adapter_name)
+            lora_weights[character] = adapter_name
+            print(f"✅ LoRA weights loaded for character: {character} (adapter: {adapter_name})")
+        
+        # If multiple characters, set adapter weights for blending
+        if len(characters) > 1:
+            # Equal weight blending for balanced representation
+            adapter_weights = [1.0 / len(characters)] * len(characters)
+            pipeline.set_adapters(adapter_names, adapter_weights=adapter_weights)
+            print(f"🎭 Multi-character mode: {characters} with equal blending ({adapter_weights})")
+        else:
+            # Single character mode
+            pipeline.set_adapters(adapter_names[0])
+            print(f"🎭 Single character mode: {characters[0]}")
+        
+        return lora_weights
+        
     except Exception as e:
-        print(f"❌ Error loading LoRA weights for {character}: {e}")
+        print(f"❌ Error loading LoRA weights for {characters}: {e}")
         raise
 
 def encode_file_to_base64(file_path: str) -> str:
@@ -325,10 +351,23 @@ def validate_input(input_data: Dict[str, Any]) -> Dict[str, Any]:
     
     # Character validation (for animation tasks)
     if task_type in ["animation", "combined"]:
-        character = input_data.get("character", "temo")
-        if character not in SUPPORTED_CHARACTERS:
-            raise ValueError(f"Invalid character: {character}. Must be one of {SUPPORTED_CHARACTERS}")
-        validated["character"] = character
+        characters = input_data.get("characters", input_data.get("character", "temo"))
+        
+        # Handle both single character and multiple characters
+        if isinstance(characters, str):
+            if characters not in SUPPORTED_CHARACTERS:
+                raise ValueError(f"Invalid character: {characters}. Must be one of {SUPPORTED_CHARACTERS}")
+            validated["characters"] = [characters]
+        elif isinstance(characters, list):
+            for char in characters:
+                if char not in SUPPORTED_CHARACTERS:
+                    raise ValueError(f"Invalid character: {char}. Must be one of {SUPPORTED_CHARACTERS}")
+            validated["characters"] = characters
+        else:
+            raise ValueError(f"Characters must be string or list, got {type(characters)}")
+        
+        # Keep backward compatibility with single "character" field
+        validated["character"] = validated["characters"][0] if len(validated["characters"]) == 1 else "multi"
         
         # Prompt validation
         prompt = input_data.get("prompt", "")
@@ -433,8 +472,9 @@ def generate_tts(
 
 @torch.inference_mode()
 def generate_animation(
-    character: str,
-    prompt: str,
+    characters: Union[str, List[str]] = None,
+    character: str = None,  # Backward compatibility
+    prompt: str = "",
     num_frames: int = 32,   # Ultra high quality default - maximum frames
     fps: int = 16,          # Ultra high quality default - maximum framerate
     width: int = 1024,      # Ultra high quality default - 1024x1024
@@ -445,12 +485,20 @@ def generate_animation(
     seed: int = 42,
     **kwargs
 ) -> Dict[str, Any]:
-    """Generate character animation"""
+    """Generate character animation with single or multiple characters"""
     
-    # Load character LoRA weights
-    load_lora_weights(MODELS.animation_pipeline, character)
+    # Handle backward compatibility
+    if characters is None:
+        characters = character if character else "temo"
     
-    print(f"🎬 Generating animation for {character}: {prompt[:50]}...")
+    # Load character LoRA weights (single or multiple)
+    lora_weights = load_lora_weights(MODELS.animation_pipeline, characters)
+    
+    # Format characters for display
+    chars_display = characters if isinstance(characters, str) else "_".join(characters)
+    chars_list = [characters] if isinstance(characters, str) else characters
+    
+    print(f"🎬 Generating animation for {chars_display}: {prompt[:50]}...")
     
     device = "cuda" if torch.cuda.is_available() else "cpu"
     generator = torch.Generator(device).manual_seed(seed)
@@ -472,8 +520,8 @@ def generate_animation(
         
         # Save outputs
         timestamp = int(time.time())
-        gif_path = OUTPUT_DIR / f"{character}_animation_{timestamp}.gif"
-        mp4_path = OUTPUT_DIR / f"{character}_animation_{timestamp}.mp4"
+        gif_path = OUTPUT_DIR / f"{chars_display}_animation_{timestamp}.gif"
+        mp4_path = OUTPUT_DIR / f"{chars_display}_animation_{timestamp}.mp4"
         
         # Export to files
         export_to_gif(frames, str(gif_path), fps=fps)
@@ -485,8 +533,10 @@ def generate_animation(
             "gif_path": str(gif_path),
             "mp4_path": str(mp4_path),
             "seed": seed,
-            "character": character,
-            "prompt": prompt
+            "characters": chars_list,
+            "character": chars_display,  # For backward compatibility
+            "prompt": prompt,
+            "lora_adapters": lora_weights
         }
         
     except Exception as e:
@@ -494,14 +544,20 @@ def generate_animation(
         raise
 
 def generate_combined(
-    character: str,
-    prompt: str,
-    dialogue_text: str,
+    characters: Union[str, List[str]] = None,
+    character: str = None,  # Backward compatibility
+    prompt: str = "",
+    dialogue_text: str = "",
     **kwargs
 ) -> Dict[str, Any]:
-    """Generate combined animation and TTS"""
+    """Generate combined animation and TTS with single or multiple characters"""
     
-    print(f"🎬🎵 Generating combined animation + TTS for {character}")
+    # Handle backward compatibility
+    if characters is None:
+        characters = character if character else "temo"
+    
+    chars_display = characters if isinstance(characters, str) else "_".join(characters)
+    print(f"🎬🎵 Generating combined animation + TTS for {chars_display}")
     
     # Extract parameters for each task
     animation_params = {k: v for k, v in kwargs.items() 
@@ -514,7 +570,7 @@ def generate_combined(
     
     # Generate animation
     animation_result = generate_animation(
-        character=character,
+        characters=characters,
         prompt=prompt,
         **animation_params
     )

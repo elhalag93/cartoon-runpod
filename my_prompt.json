@@ -1,0 +1,38 @@
+{
+  "single_character_example": {
+    "input": {
+      "task_type": "combined",
+      "character": "temo",
+      "prompt": "REPLACE_WITH_YOUR_ANIMATION_PROMPT - Example: temo character dancing on moon surface with epic lighting, detailed cartoon style, smooth fluid animation, masterpiece quality",
+      "dialogue_text": "[S1] REPLACE_WITH_YOUR_DIALOGUE - Example: Hello from the moon! [S2] What an amazing adventure this is!",
+      "num_frames": 32,
+      "fps": 16,
+      "width": 1024,
+      "height": 1024,
+      "guidance_scale": 12.0,
+      "num_inference_steps": 50,
+      "max_new_tokens": 4096,
+      "tts_guidance_scale": 5.0,
+      "temperature": 1.4,
+      "seed": 42
+    }
+  },
+  "multi_character_example": {
+    "input": {
+      "task_type": "combined",
+      "characters": ["temo", "felfel"],
+      "prompt": "REPLACE_WITH_YOUR_MULTI_CHARACTER_PROMPT - Example: temo and felfel characters working together on moon base, both characters clearly visible, temo in space suit on left, felfel in adventure gear on right, epic lighting, detailed cartoon style, masterpiece quality, two characters interacting",
+      "dialogue_text": "[S1] REPLACE_WITH_TEMO_DIALOGUE - Example: Welcome to the moon base, Felfel! [S2] REPLACE_WITH_FELFEL_DIALOGUE - Example: Thanks for showing me around, Temo! This is amazing!",
+      "num_frames": 32,
+      "fps": 16,
+      "width": 1024,
+      "height": 1024,
+      "guidance_scale": 12.0,
+      "num_inference_steps": 50,
+      "max_new_tokens": 4096,
+      "tts_guidance_scale": 5.0,
+      "temperature": 1.4,
+      "seed": 42
+    }
+  }
+} 
