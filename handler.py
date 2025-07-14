@@ -53,17 +53,17 @@ SDXL_MODEL_ID = "stabilityai/stable-diffusion-xl-base-1.0"  # Full SDXL for maxi
 MOTION_ADAPTER_ID = "guoyww/animatediff-motion-adapter-v1-5-2"  # Stable non-beta version
 CONTROLNET_MODEL_ID = "diffusers/controlnet-openpose-sdxl-1.0"  # For better character consistency
 
-# High Quality Generation Settings
+# ULTRA HIGH QUALITY Generation Settings - 1024x1024
 HIGH_QUALITY_DEFAULTS = {
-    "num_frames": 24,           # More frames for smoother motion
-    "fps": 12,                  # Higher framerate  
-    "width": 768,               # Higher resolution
-    "height": 768,              # Higher resolution
-    "guidance_scale": 9.0,      # Higher guidance for better prompt following
-    "num_inference_steps": 25,  # More steps for better quality
-    "tts_guidance_scale": 4.0,  # Higher TTS guidance
+    "num_frames": 32,           # Maximum frames for ultra smooth motion
+    "fps": 16,                  # Highest framerate for ultra fluidity
+    "width": 1024,              # Ultra high resolution
+    "height": 1024,             # Ultra high resolution
+    "guidance_scale": 12.0,     # Maximum guidance for perfect prompt following
+    "num_inference_steps": 50,  # Maximum steps for ultimate quality
+    "tts_guidance_scale": 5.0,  # Maximum TTS guidance
     "max_new_tokens": 4096,     # Maximum tokens for best TTS quality
-    "temperature": 1.6,         # Slightly lower for more consistent voice
+    "temperature": 1.4,         # Optimized for consistency
 }
 
 # Supported characters
@@ -344,23 +344,23 @@ def validate_input(input_data: Dict[str, Any]) -> Dict[str, Any]:
             raise ValueError("dialogue_text is required for TTS generation")
         validated["dialogue_text"] = str(dialogue_text)[:1000]  # Limit text length
     
-    # Animation parameters - HIGH QUALITY DEFAULTS
+    # Animation parameters - ULTRA HIGH QUALITY DEFAULTS (1024x1024)
     if task_type in ["animation", "combined"]:
-        validated["num_frames"] = max(8, min(48, input_data.get("num_frames", HIGH_QUALITY_DEFAULTS["num_frames"])))
-        validated["fps"] = max(8, min(16, input_data.get("fps", HIGH_QUALITY_DEFAULTS["fps"])))
-        validated["width"] = max(512, min(1024, input_data.get("width", HIGH_QUALITY_DEFAULTS["width"])))
-        validated["height"] = max(512, min(1024, input_data.get("height", HIGH_QUALITY_DEFAULTS["height"])))
-        validated["guidance_scale"] = max(3.0, min(20.0, input_data.get("guidance_scale", HIGH_QUALITY_DEFAULTS["guidance_scale"])))
-        validated["num_inference_steps"] = max(15, min(50, input_data.get("num_inference_steps", HIGH_QUALITY_DEFAULTS["num_inference_steps"])))
-        validated["negative_prompt"] = input_data.get("negative_prompt", "blurry, low quality, distorted, deformed, ugly, bad anatomy, disfigured, poorly drawn face, mutation, mutated, extra limb, ugly, disgusting, poorly drawn hands, missing limb, floating limbs, disconnected limbs, malformed hands, blurry, ((((mutated hands and fingers)))), watermark, watermarked, oversaturated, censored, distorted hands, amputation, missing hands, obese, doubled face, double hands")
+        validated["num_frames"] = max(16, min(64, input_data.get("num_frames", HIGH_QUALITY_DEFAULTS["num_frames"])))
+        validated["fps"] = max(12, min(24, input_data.get("fps", HIGH_QUALITY_DEFAULTS["fps"])))
+        validated["width"] = max(768, min(1536, input_data.get("width", HIGH_QUALITY_DEFAULTS["width"])))
+        validated["height"] = max(768, min(1536, input_data.get("height", HIGH_QUALITY_DEFAULTS["height"])))
+        validated["guidance_scale"] = max(8.0, min(25.0, input_data.get("guidance_scale", HIGH_QUALITY_DEFAULTS["guidance_scale"])))
+        validated["num_inference_steps"] = max(30, min(75, input_data.get("num_inference_steps", HIGH_QUALITY_DEFAULTS["num_inference_steps"])))
+        validated["negative_prompt"] = input_data.get("negative_prompt", "blurry, low quality, distorted, deformed, ugly, bad anatomy, disfigured, poorly drawn face, mutation, mutated, extra limb, ugly, disgusting, poorly drawn hands, missing limb, floating limbs, disconnected limbs, malformed hands, blurry, ((((mutated hands and fingers)))), watermark, watermarked, oversaturated, censored, distorted hands, amputation, missing hands, obese, doubled face, double hands, bad proportions, gross proportions, short arm, missing arms, missing legs, extra digit, extra arms, extra leg, extra foot")
     
-    # TTS parameters - HIGH QUALITY DEFAULTS  
+    # TTS parameters - ULTRA HIGH QUALITY DEFAULTS  
     if task_type in ["tts", "combined"]:
-        validated["max_new_tokens"] = max(1024, min(6144, input_data.get("max_new_tokens", HIGH_QUALITY_DEFAULTS["max_new_tokens"])))
-        validated["tts_guidance_scale"] = max(1.0, min(10.0, input_data.get("tts_guidance_scale", HIGH_QUALITY_DEFAULTS["tts_guidance_scale"])))
-        validated["temperature"] = max(0.5, min(2.0, input_data.get("temperature", HIGH_QUALITY_DEFAULTS["temperature"])))
-        validated["top_p"] = max(0.1, min(1.0, input_data.get("top_p", 0.9)))
-        validated["top_k"] = max(1, min(100, input_data.get("top_k", 50)))
+        validated["max_new_tokens"] = max(2048, min(8192, input_data.get("max_new_tokens", HIGH_QUALITY_DEFAULTS["max_new_tokens"])))
+        validated["tts_guidance_scale"] = max(2.0, min(10.0, input_data.get("tts_guidance_scale", HIGH_QUALITY_DEFAULTS["tts_guidance_scale"])))
+        validated["temperature"] = max(0.8, min(2.0, input_data.get("temperature", HIGH_QUALITY_DEFAULTS["temperature"])))
+        validated["top_p"] = max(0.85, min(0.95, input_data.get("top_p", 0.9)))
+        validated["top_k"] = max(40, min(100, input_data.get("top_k", 60)))
     
     # Seed handling
     seed = input_data.get("seed")
@@ -374,11 +374,11 @@ def validate_input(input_data: Dict[str, Any]) -> Dict[str, Any]:
 @torch.inference_mode()
 def generate_tts(
     dialogue_text: str,
-    max_new_tokens: int = 4096,    # High quality default
-    tts_guidance_scale: float = 4.0,  # High quality default
-    temperature: float = 1.6,      # High quality default
+    max_new_tokens: int = 4096,    # Ultra high quality default
+    tts_guidance_scale: float = 5.0,  # Ultra high quality default - maximum guidance
+    temperature: float = 1.4,      # Ultra high quality default - optimized consistency
     top_p: float = 0.9,
-    top_k: int = 50,               # High quality default
+    top_k: int = 60,               # Ultra high quality default - optimized sampling
     seed: int = 42,
     **kwargs
 ) -> Dict[str, Any]:
@@ -435,13 +435,13 @@ def generate_tts(
 def generate_animation(
     character: str,
     prompt: str,
-    num_frames: int = 24,  # High quality default
-    fps: int = 12,         # High quality default
-    width: int = 768,      # High quality default
-    height: int = 768,     # High quality default
-    guidance_scale: float = 9.0,      # High quality default
-    num_inference_steps: int = 25,    # High quality default
-    negative_prompt: str = "blurry, low quality, distorted, deformed, ugly, bad anatomy, disfigured, poorly drawn face, mutation, mutated, extra limb, ugly, disgusting, poorly drawn hands, missing limb, floating limbs, disconnected limbs, malformed hands, blurry, ((((mutated hands and fingers)))), watermark, watermarked, oversaturated, censored, distorted hands, amputation, missing hands, obese, doubled face, double hands",
+    num_frames: int = 32,   # Ultra high quality default - maximum frames
+    fps: int = 16,          # Ultra high quality default - maximum framerate
+    width: int = 1024,      # Ultra high quality default - 1024x1024
+    height: int = 1024,     # Ultra high quality default - 1024x1024
+    guidance_scale: float = 12.0,     # Ultra high quality default - maximum guidance
+    num_inference_steps: int = 50,    # Ultra high quality default - maximum steps
+    negative_prompt: str = "blurry, low quality, distorted, deformed, ugly, bad anatomy, disfigured, poorly drawn face, mutation, mutated, extra limb, ugly, disgusting, poorly drawn hands, missing limb, floating limbs, disconnected limbs, malformed hands, blurry, ((((mutated hands and fingers)))), watermark, watermarked, oversaturated, censored, distorted hands, amputation, missing hands, obese, doubled face, double hands, bad proportions, gross proportions, short arm, missing arms, missing legs, extra digit, extra arms, extra leg, extra foot",
     seed: int = 42,
     **kwargs
 ) -> Dict[str, Any]:

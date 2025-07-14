@@ -1,54 +1,54 @@
 {
   "tests": [
     {
-      "name": "test_animation_generation",
+      "name": "test_animation_generation_1024",
       "input": {
         "task_type": "animation",
         "character": "temo",
-        "prompt": "temo character walking on moon surface, detailed cartoon style",
-        "num_frames": 8,
-        "fps": 8,
+        "prompt": "temo character walking on moon surface, detailed cartoon style, ultra high quality, 4K resolution",
+        "num_frames": 16,
+        "fps": 16,
         "width": 1024,
         "height": 1024,
-        "guidance_scale": 7.5,
-        "num_inference_steps": 20,
+        "guidance_scale": 12.0,
+        "num_inference_steps": 40,
         "seed": 42
       },
-      "timeout": 100000
+      "timeout": 180000
     },
     {
-      "name": "test_tts_generation",
+      "name": "test_tts_generation_ultra_quality",
       "input": {
         "task_type": "tts",
-        "dialogue_text": "[S1] Hello from the moon! [S2] This is a test of the TTS system.",
-        "max_new_tokens": 1024,
-        "tts_guidance_scale": 3.0,
-        "temperature": 1.8,
+        "dialogue_text": "[S1] Hello from the moon with ultra high quality audio! [S2] This is a test of the enhanced TTS system with maximum fidelity.",
+        "max_new_tokens": 4096,
+        "tts_guidance_scale": 5.0,
+        "temperature": 1.4,
         "top_p": 0.9,
-        "top_k": 45,
+        "top_k": 60,
         "seed": 42
       },
-      "timeout": 30000
+      "timeout": 60000
     },
     {
-      "name": "test_combined_generation",
+      "name": "test_combined_generation_1024_ultra",
       "input": {
         "task_type": "combined",
         "character": "felfel",
-        "prompt": "felfel character waving hello, detailed cartoon style",
-        "dialogue_text": "[S1] Hello everyone! [S2] Nice to meet you!",
-        "num_frames": 8,
-        "fps": 8,
+        "prompt": "felfel character waving hello, detailed cartoon style, ultra high quality, 4K resolution, masterpiece",
+        "dialogue_text": "[S1] Hello everyone with crystal clear audio! [S2] Nice to meet you with ultra high quality voice!",
+        "num_frames": 24,
+        "fps": 16,
         "width": 1024,
         "height": 1024,
-        "guidance_scale": 7.5,
-        "num_inference_steps": 10,
-        "max_new_tokens": 1024,
-        "tts_guidance_scale": 3.0,
-        "temperature": 1.8,
+        "guidance_scale": 12.0,
+        "num_inference_steps": 40,
+        "max_new_tokens": 4096,
+        "tts_guidance_scale": 5.0,
+        "temperature": 1.4,
         "seed": 84
       },
-      "timeout": 90000
+      "timeout": 240000
     },
     {
       "name": "test_minimal_animation",
@@ -62,20 +62,20 @@
       "timeout": 30000
     },
     {
-      "name": "test_high_quality_animation",
+      "name": "test_ultra_quality_animation_1024",
       "input": {
         "task_type": "animation",
         "character": "felfel",
-        "prompt": "felfel character exploring magical forest, high quality, detailed",
-        "num_frames": 16,
-        "fps": 8,
+        "prompt": "felfel character exploring magical forest, ultra high quality, 4K detailed, masterpiece quality, professional animation",
+        "num_frames": 32,
+        "fps": 16,
         "width": 1024,
         "height": 1024,
-        "guidance_scale": 10.0,
-        "num_inference_steps": 20,
+        "guidance_scale": 15.0,
+        "num_inference_steps": 50,
         "seed": 456
       },
-      "timeout": 120000
+      "timeout": 300000
     }
   ],
   "config": {

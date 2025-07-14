@@ -1,8 +1,8 @@
-# 💎 HIGH QUALITY Cartoon Animation System
+# 💎 ULTRA HIGH QUALITY Cartoon Animation System - 1024x1024
 
-## 🚀 **Maximum Quality Configuration**
+## 🚀 **Ultra Maximum Quality Configuration**
 
-Your cartoon animation system has been upgraded to deliver **MAXIMUM QUALITY** results regardless of cost. Here's what's new:
+Your cartoon animation system has been upgraded to deliver **ULTRA HIGH QUALITY 1024x1024** results with no compromises. Here's what's new:
 
 ## 🔧 **High Quality Model Upgrades**
 
@@ -14,17 +14,17 @@ Your cartoon animation system has been upgraded to deliver **MAXIMUM QUALITY** r
 ### TTS Model
 - **Dia TTS**: `nari-labs/Dia-1.6B-0626` (Best available TTS model)
 
-## ⚙️ **High Quality Default Settings**
+## ⚙️ **Ultra High Quality Default Settings - 1024x1024**
 
 ### Animation Parameters
 ```json
 {
-  "num_frames": 24,        // More frames = smoother motion
-  "fps": 12,              // Higher framerate = better motion
-  "width": 768,           // Higher resolution
-  "height": 768,          // Higher resolution  
-  "guidance_scale": 9.0,  // Better prompt following
-  "num_inference_steps": 25  // Higher quality generation
+  "num_frames": 32,        // Maximum frames = ultra smooth motion
+  "fps": 16,              // Maximum framerate = ultra fluid motion
+  "width": 1024,          // Ultra high resolution - 1024x1024
+  "height": 1024,         // Ultra high resolution - 1024x1024
+  "guidance_scale": 12.0, // Maximum guidance = perfect prompt following
+  "num_inference_steps": 50  // Maximum steps = ultimate quality
 }
 ```
 
@@ -32,52 +32,53 @@ Your cartoon animation system has been upgraded to deliver **MAXIMUM QUALITY** r
 ```json
 {
   "max_new_tokens": 4096,    // Maximum audio quality
-  "tts_guidance_scale": 4.0, // Better voice generation
-  "temperature": 1.6,        // More consistent voice
-  "top_k": 50               // Better sampling
+  "tts_guidance_scale": 5.0, // Maximum voice generation quality
+  "temperature": 1.4,        // Optimized consistency
+  "top_k": 60               // Optimized sampling
 }
 ```
 
 ## 🎯 **Quality vs Performance Comparison**
 
-| Setting | Previous (Fast) | New (High Quality) | Quality Improvement |
+| Setting | Previous (Fast) | New (Ultra Quality) | Quality Improvement |
 |---------|----------------|-------------------|-------------------|
-| **Resolution** | 512x512 | 768x768 | +78% pixels |
-| **Frames** | 16 | 24 | +50% smoother |
-| **FPS** | 8 | 12 | +50% fluid motion |
-| **Inference Steps** | 15 | 25 | +67% detail |
-| **TTS Tokens** | 3072 | 4096 | +33% audio quality |
+| **Resolution** | 512x512 | 1024x1024 | +300% pixels |
+| **Frames** | 16 | 32 | +100% smoother |
+| **FPS** | 8 | 16 | +100% fluid motion |
+| **Guidance Scale** | 7.5 | 12.0 | +60% accuracy |
+| **Inference Steps** | 15 | 50 | +233% detail |
+| **TTS Guidance** | 3.0 | 5.0 | +67% voice quality |
 
-## 💻 **GPU Requirements**
+## 💻 **GPU Requirements for 1024x1024 Ultra Quality**
 
-### Minimum Requirements
-- **GPU**: RTX 3090 (24GB VRAM)
-- **RAM**: 32GB system RAM
-- **Storage**: 100GB free space
-- **Generation Time**: 90-180 seconds
-
-### Recommended Requirements
+### Minimum Requirements (Not Recommended)
 - **GPU**: RTX A6000 (48GB VRAM) 
 - **RAM**: 64GB system RAM
 - **Storage**: 200GB free space
-- **Generation Time**: 60-120 seconds
+- **Generation Time**: 3-5 minutes
 
-### Optimal Setup
+### Recommended Requirements
 - **GPU**: A100 (80GB VRAM)
 - **RAM**: 128GB system RAM
 - **Storage**: 500GB free space
-- **Generation Time**: 30-90 seconds
+- **Generation Time**: 2-3 minutes
+
+### Optimal Setup (Best Performance)
+- **GPU**: H100 (80GB VRAM)
+- **RAM**: 256GB system RAM
+- **Storage**: 1TB free space
+- **Generation Time**: 1-2 minutes
 
 ## 🎨 **High Quality Prompting Guide**
 
-### Excellent Prompts for Maximum Quality
+### Excellent Prompts for Ultra Maximum Quality 1024x1024
 ```json
 {
-  "prompt": "temo character walking confidently on moon surface with epic cinematic lighting, detailed cartoon style, space helmet reflecting Earth, dramatic lunar landscape with deep craters and distant stars, smooth fluid animation, masterpiece quality, ultra detailed, perfect anatomy, dynamic pose, professional animation"
+  "prompt": "temo character walking confidently on moon surface with epic cinematic lighting, detailed cartoon style, space helmet reflecting Earth, dramatic lunar landscape with deep craters and distant stars, smooth fluid animation, masterpiece quality, ultra detailed, perfect anatomy, dynamic pose, professional animation, 4K quality, studio lighting, perfect composition, ultra high resolution"
 }
 ```
 
-### Quality Keywords to Include
+### Quality Keywords to Include for 1024x1024
 - `masterpiece quality`
 - `ultra detailed`
 - `perfect anatomy` 
@@ -86,6 +87,10 @@ Your cartoon animation system has been upgraded to deliver **MAXIMUM QUALITY** r
 - `smooth fluid motion`
 - `dynamic pose`
 - `epic composition`
+- `4K quality`
+- `ultra high resolution`
+- `studio lighting`
+- `perfect composition`
 
 ### Enhanced Negative Prompts
 The system now uses comprehensive negative prompts to avoid quality issues:

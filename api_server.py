@@ -49,36 +49,36 @@ class AnimationRequest(BaseModel):
     character: str = Field(..., description="Character name (temo, felfel)")
     prompt: str = Field(..., description="Animation prompt")
     negative_prompt: str = Field("blurry, low quality", description="Negative prompt")
-    num_frames: int = Field(16, ge=8, le=32, description="Number of frames")
-    fps: int = Field(8, ge=4, le=12, description="Frames per second")
-    width: int = Field(512, ge=256, le=768, description="Video width")
-    height: int = Field(512, ge=256, le=768, description="Video height")
-    guidance_scale: float = Field(7.5, ge=1.0, le=15.0, description="Guidance scale")
-    num_inference_steps: int = Field(15, ge=10, le=30, description="Inference steps")
+    num_frames: int = Field(32, ge=16, le=64, description="Number of frames (ultra quality)")
+    fps: int = Field(16, ge=12, le=24, description="Frames per second (ultra quality)")
+    width: int = Field(1024, ge=768, le=1536, description="Video width (ultra quality 1024x1024)")
+    height: int = Field(1024, ge=768, le=1536, description="Video height (ultra quality 1024x1024)")
+    guidance_scale: float = Field(12.0, ge=8.0, le=25.0, description="Guidance scale (ultra quality)")
+    num_inference_steps: int = Field(50, ge=30, le=75, description="Inference steps (ultra quality)")
     seed: Optional[int] = Field(None, description="Random seed")
 
 class TTSRequest(BaseModel):
     dialogue_text: str = Field(..., description="Text to convert to speech")
-    max_new_tokens: int = Field(3072, ge=1024, le=4096, description="Max tokens")
-    guidance_scale: float = Field(3.0, ge=1.0, le=10.0, description="Guidance scale")
-    temperature: float = Field(1.8, ge=0.1, le=2.0, description="Temperature")
-    top_p: float = Field(0.9, ge=0.1, le=1.0, description="Top P")
-    top_k: int = Field(45, ge=1, le=100, description="Top K")
+    max_new_tokens: int = Field(4096, ge=2048, le=8192, description="Max tokens (ultra quality)")
+    guidance_scale: float = Field(5.0, ge=2.0, le=10.0, description="Guidance scale (ultra quality)")
+    temperature: float = Field(1.4, ge=0.8, le=2.0, description="Temperature (ultra quality)")
+    top_p: float = Field(0.9, ge=0.85, le=0.95, description="Top P (ultra quality)")
+    top_k: int = Field(60, ge=40, le=100, description="Top K (ultra quality)")
     seed: Optional[int] = Field(None, description="Random seed")
 
 class CombinedRequest(BaseModel):
     character: str = Field(..., description="Character name")
     prompt: str = Field(..., description="Animation prompt")
     dialogue_text: str = Field(..., description="Text to convert to speech")
-    num_frames: int = Field(16, ge=8, le=32, description="Number of frames")
-    fps: int = Field(8, ge=4, le=12, description="Frames per second")
-    width: int = Field(512, ge=256, le=768, description="Video width")
-    height: int = Field(512, ge=256, le=768, description="Video height")
-    guidance_scale: float = Field(7.5, ge=1.0, le=15.0, description="Animation guidance")
-    num_inference_steps: int = Field(15, ge=10, le=30, description="Inference steps")
-    max_new_tokens: int = Field(3072, ge=1024, le=4096, description="Max tokens")
-    tts_guidance_scale: float = Field(3.0, ge=1.0, le=10.0, description="TTS guidance")
-    temperature: float = Field(1.8, ge=0.1, le=2.0, description="Temperature")
+    num_frames: int = Field(32, ge=16, le=64, description="Number of frames (ultra quality)")
+    fps: int = Field(16, ge=12, le=24, description="Frames per second (ultra quality)")
+    width: int = Field(1024, ge=768, le=1536, description="Video width (ultra quality 1024x1024)")
+    height: int = Field(1024, ge=768, le=1536, description="Video height (ultra quality 1024x1024)")
+    guidance_scale: float = Field(12.0, ge=8.0, le=25.0, description="Animation guidance (ultra quality)")
+    num_inference_steps: int = Field(50, ge=30, le=75, description="Inference steps (ultra quality)")
+    max_new_tokens: int = Field(4096, ge=2048, le=8192, description="Max tokens (ultra quality)")
+    tts_guidance_scale: float = Field(5.0, ge=2.0, le=10.0, description="TTS guidance (ultra quality)")
+    temperature: float = Field(1.4, ge=0.8, le=2.0, description="Temperature (ultra quality)")
     seed: Optional[int] = Field(None, description="Random seed")
 
 class GenerationResponse(BaseModel):
@@ -262,30 +262,43 @@ async def get_characters():
     }
 
 @app.get("/api/examples")
-async def get_examples():
-    """Get example requests"""
-    return {
-        "animation_example": {
-            "character": "temo",
-            "prompt": "temo character walking on moon surface, space adventure",
-            "num_frames": 16,
-            "fps": 8,
-            "seed": 42
-        },
-        "tts_example": {
-            "dialogue_text": "[S1] Hello from the moon! [S2] What an amazing adventure!",
-            "max_new_tokens": 3072,
-            "seed": 42
-        },
-        "combined_example": {
-            "character": "temo",
-            "prompt": "temo character waving hello from moon",
-            "dialogue_text": "[S1] Greetings from the lunar surface!",
-            "num_frames": 16,
-            "fps": 8,
-            "seed": 42
+async     def get_examples():
+        """Get example requests"""
+        return {
+            "animation_example": {
+                "character": "temo",
+                "prompt": "temo character walking on moon surface, space adventure, ultra high quality, 4K resolution",
+                "num_frames": 32,
+                "fps": 16,
+                "width": 1024,
+                "height": 1024,
+                "guidance_scale": 12.0,
+                "num_inference_steps": 50,
+                "seed": 42
+            },
+            "tts_example": {
+                "dialogue_text": "[S1] Hello from the moon with crystal clear audio! [S2] What an amazing ultra quality adventure!",
+                "max_new_tokens": 4096,
+                "tts_guidance_scale": 5.0,
+                "temperature": 1.4,
+                "seed": 42
+            },
+            "combined_example": {
+                "character": "temo",
+                "prompt": "temo character waving hello from moon, ultra high quality, masterpiece animation",
+                "dialogue_text": "[S1] Greetings from the lunar surface with perfect audio!",
+                "num_frames": 32,
+                "fps": 16,
+                "width": 1024,
+                "height": 1024,
+                "guidance_scale": 12.0,
+                "num_inference_steps": 50,
+                "max_new_tokens": 4096,
+                "tts_guidance_scale": 5.0,
+                "temperature": 1.4,
+                "seed": 42
+            }
         }
-    }
 
 if __name__ == "__main__":
     import argparse

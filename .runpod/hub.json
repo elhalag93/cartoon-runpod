@@ -1,7 +1,7 @@
 {
-  "name": "Cartoon Animation Worker - High Quality",
-  "description": "Generate MAXIMUM QUALITY cartoon character animations with voice using Dia TTS and full SDXL AnimateDiff",
-  "version": "2.0.0",
+  "name": "Cartoon Animation Worker - Ultra High Quality 1024x1024",
+  "description": "Generate ULTRA HIGH QUALITY 1024x1024 cartoon character animations with voice using Dia TTS and full SDXL AnimateDiff",
+  "version": "3.0.0",
   "category": "AI/ML",
   "tags": [
     "animation",
@@ -25,15 +25,14 @@
   },
   "resources": {
     "gpu_types": [
-      "RTX A6000",
-      "A100", 
-      "RTX 4090",
-      "RTX 3090"
+      "A100",
+      "H100", 
+      "RTX A6000"
     ],
     "gpu_count": 1,
-    "cpu_count": 8,
-    "memory_gb": 64,
-    "disk_gb": 100
+    "cpu_count": 16,
+    "memory_gb": 128,
+    "disk_gb": 200
   },
   "endpoints": [
     {
@@ -63,66 +62,66 @@
           },
           "num_frames": {
             "type": "integer",
-            "minimum": 12,
-            "maximum": 48,
-            "default": 24,
-            "description": "Number of animation frames (high quality)"
+            "minimum": 16,
+            "maximum": 64,
+            "default": 32,
+            "description": "Number of animation frames (ultra high quality)"
           },
           "fps": {
             "type": "integer",
-            "minimum": 8,
-            "maximum": 16,
-            "default": 12,
-            "description": "Frames per second (high quality)"
+            "minimum": 12,
+            "maximum": 24,
+            "default": 16,
+            "description": "Frames per second (ultra high quality)"
           },
           "width": {
             "type": "integer",
-            "minimum": 512,
-            "maximum": 1024,
-            "default": 768,
-            "description": "Output width in pixels (high quality)"
+            "minimum": 768,
+            "maximum": 1536,
+            "default": 1024,
+            "description": "Output width in pixels (ultra high quality 1024x1024)"
           },
           "height": {
             "type": "integer",
-            "minimum": 512,
-            "maximum": 1024,
-            "default": 768,
-            "description": "Output height in pixels (high quality)"
+            "minimum": 768,
+            "maximum": 1536,
+            "default": 1024,
+            "description": "Output height in pixels (ultra high quality 1024x1024)"
           },
           "guidance_scale": {
             "type": "number",
-            "minimum": 3.0,
-            "maximum": 20.0,
-            "default": 9.0,
-            "description": "Guidance scale for animation (high quality)"
+            "minimum": 8.0,
+            "maximum": 25.0,
+            "default": 12.0,
+            "description": "Guidance scale for animation (ultra high quality)"
           },
           "tts_guidance_scale": {
             "type": "number",
-            "minimum": 1.0,
+            "minimum": 2.0,
             "maximum": 10.0,
-            "default": 3.0,
-            "description": "Guidance scale for TTS generation"
+            "default": 5.0,
+            "description": "Guidance scale for TTS generation (ultra high quality)"
           },
           "temperature": {
             "type": "number",
-            "minimum": 0.1,
+            "minimum": 0.8,
             "maximum": 2.0,
-            "default": 1.8,
-            "description": "Temperature for TTS sampling"
+            "default": 1.4,
+            "description": "Temperature for TTS sampling (ultra high quality)"
           },
           "max_new_tokens": {
             "type": "integer",
-            "minimum": 512,
-            "maximum": 4096,
-            "default": 3072,
-            "description": "Maximum tokens for TTS generation"
+            "minimum": 2048,
+            "maximum": 8192,
+            "default": 4096,
+            "description": "Maximum tokens for TTS generation (ultra high quality)"
           },
           "num_inference_steps": {
             "type": "integer",
-            "minimum": 15,
-            "maximum": 50,
-            "default": 25,
-            "description": "Number of inference steps (high quality)"
+            "minimum": 30,
+            "maximum": 75,
+            "default": 50,
+            "description": "Number of inference steps (ultra high quality)"
           },
           "seed": {
             "type": "integer",

@@ -2,18 +2,18 @@
   "input": {
     "task_type": "combined",
     "character": "temo",
-    "prompt": "temo character walking confidently on moon surface with epic cinematic lighting, detailed cartoon style, space helmet reflecting Earth, dramatic lunar landscape with deep craters and distant stars, smooth fluid animation, masterpiece quality, ultra detailed, perfect anatomy, dynamic pose, professional animation",
-    "dialogue_text": "[S1] Temo is exploring the magnificent lunar surface! [S2] Look at that breathtaking view of Earth from here. [S1] (gasps in wonder) This is absolutely incredible! The craters stretch endlessly. [S2] Every step reveals new mysteries of this ancient world.",
-    "num_frames": 32,
-    "fps": 12,
-    "guidance_scale": 12.0,
-    "num_inference_steps": 30,
+    "prompt": "temo character walking confidently on moon surface with epic cinematic lighting, detailed cartoon style, space helmet reflecting Earth, dramatic lunar landscape with deep craters and distant stars, smooth fluid animation, masterpiece quality, ultra detailed, perfect anatomy, dynamic pose, professional animation, 4K quality, studio lighting, perfect composition",
+    "dialogue_text": "[S1] Temo is exploring the magnificent lunar surface with unprecedented detail! [S2] Look at that breathtaking ultra-high-definition view of Earth from here. [S1] (gasps in wonder) This is absolutely incredible! The craters stretch endlessly in perfect clarity. [S2] Every step reveals new mysteries of this ancient world in stunning 4K quality.",
+    "num_frames": 48,
+    "fps": 16,
+    "guidance_scale": 15.0,
+    "num_inference_steps": 50,
     "seed": 42,
-    "max_new_tokens": 4096,
-    "tts_guidance_scale": 4.5,
-    "temperature": 1.5,
-    "height": 768,
-    "width": 768,
-    "negative_prompt": "blurry, low quality, distorted, deformed, ugly, bad anatomy, disfigured, poorly drawn face, mutation, mutated, extra limb, ugly, disgusting, poorly drawn hands, missing limb, floating limbs, disconnected limbs, malformed hands, blurry, ((((mutated hands and fingers)))), watermark, watermarked, oversaturated, censored, distorted hands, amputation, missing hands, obese, doubled face, double hands, bad proportions, gross proportions, short arm, missing arms, missing legs, extra digit, extra arms, extra leg, extra foot, ((repeating hair))"
+    "max_new_tokens": 6144,
+    "tts_guidance_scale": 6.0,
+    "temperature": 1.2,
+    "height": 1024,
+    "width": 1024,
+    "negative_prompt": "blurry, low quality, distorted, deformed, ugly, bad anatomy, disfigured, poorly drawn face, mutation, mutated, extra limb, ugly, disgusting, poorly drawn hands, missing limb, floating limbs, disconnected limbs, malformed hands, blurry, ((((mutated hands and fingers)))), watermark, watermarked, oversaturated, censored, distorted hands, amputation, missing hands, obese, doubled face, double hands, bad proportions, gross proportions, short arm, missing arms, missing legs, extra digit, extra arms, extra leg, extra foot, ((repeating hair)), pixelated, low resolution, compressed, artifacts, noise, grain, poor lighting"
   }
 } 

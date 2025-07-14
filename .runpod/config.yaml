@@ -1,6 +1,6 @@
-name: cartoon-animation-worker-hq
-description: "Generate HIGH QUALITY cartoon character animations with voice using Dia TTS and AnimateDiff - Maximum Quality Mode"
-version: "2.0.0"
+name: cartoon-animation-worker-ultra-hq
+description: "Generate ULTRA HIGH QUALITY 1024x1024 cartoon character animations with voice using Dia TTS and AnimateDiff - Maximum Quality Mode"
+version: "3.0.0"
 
 runtime:
   python_version: "3.10"
@@ -13,23 +13,23 @@ build:
 deployment:
   min_workers: 0
   max_workers: 1
-  idle_timeout: 300
+  idle_timeout: 600  # Longer timeout for 1024x1024 generation
   
 resources:
   gpu_types:
-    - "RTX A6000"  # 48GB VRAM - RECOMMENDED
-    - "RTX 4090"   # 24GB VRAM - Good
-    - "A100"       # 40GB/80GB VRAM - Excellent
-    - "RTX 3090"   # 24GB VRAM - Minimum
+    - "A100"       # 80GB VRAM - REQUIRED for 1024x1024
+    - "RTX A6000"  # 48GB VRAM - RECOMMENDED  
+    - "H100"       # 80GB VRAM - EXCELLENT
   gpu_count: 1
-  cpu_count: 8
-  memory_gb: 64     # Increased for high quality
-  disk_gb: 100      # More space for high quality models
+  cpu_count: 16     # More CPU power for 1024x1024
+  memory_gb: 128    # Maximum RAM for ultra quality
+  disk_gb: 200      # More space for 1024x1024 outputs
 
 environment:
   PYTHONPATH: "/workspace"
   RUNPOD_DEBUG: "false"
-  HIGH_QUALITY_MODE: "true"
+  ULTRA_QUALITY_MODE: "true"
+  RESOLUTION_1024: "true"
 
 handler:
   file: "handler.py"
