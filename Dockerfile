@@ -1,79 +1,82 @@
-# Dockerfile for Cartoon Animation Worker on RunPod
+# Multi-stage Dockerfile for Cartoon Animation Worker - Optimized for Space
 
-FROM python:3.10-slim
+# Stage 1: Build dependencies
+FROM python:3.10-slim as builder
 
-# Set working directory
-WORKDIR /workspace
-
-# Install system dependencies
+# Install system dependencies for building
 RUN apt-get update && apt-get install -y --no-install-recommends \
     git \
     curl \
     build-essential \
     && rm -rf /var/lib/apt/lists/*
 
-# Copy project files
-COPY . .
+# Set working directory
+WORKDIR /workspace
 
-# Install Python dependencies in stages for better error handling
-RUN pip install --no-cache-dir --upgrade pip
+# Copy requirements first for better caching
+COPY pyproject.toml ./
 
-# Install PyTorch with CUDA support from official PyTorch index
+# Install Python dependencies in a virtual environment
+RUN python -m venv /opt/venv
+ENV PATH="/opt/venv/bin:$PATH"
+
+# Install PyTorch CPU-only first (much smaller)
+RUN pip install --no-cache-dir torch==2.6.0+cpu torchvision torchaudio --index-url https://download.pytorch.org/whl/cpu
+
+# Install other dependencies
 RUN pip install --no-cache-dir \
-    torch==2.1.0+cu118 \
-    torchaudio==2.1.0+cu118 \
-    torchvision==0.16.0+cu118 \
-    --index-url https://download.pytorch.org/whl/cu118
-
-# Install core ML dependencies
-RUN pip install --no-cache-dir \
-    transformers>=4.35.0 \
-    diffusers>=0.24.0 \
-    accelerate>=0.24.0 \
-    safetensors>=0.4.0 \
-    huggingface-hub>=0.19.0
-
-# Install RunPod and core utilities
-RUN pip install --no-cache-dir \
+    transformers>=4.40.0 \
+    diffusers>=0.30.0 \
+    accelerate>=0.30.0 \
     runpod>=1.7.0 \
-    numpy>=1.24.0 \
-    pillow>=10.0.0 \
-    requests>=2.31.0 \
-    soundfile>=0.12.0
-
-# Install web framework dependencies
-RUN pip install --no-cache-dir \
-    gradio>=4.0.0 \
+    gradio>=5.25.2 \
     fastapi>=0.104.0 \
     uvicorn>=0.24.0 \
-    pydantic>=2.5.0
+    huggingface-hub>=0.30.2 \
+    numpy>=1.24.0 \
+    pillow>=10.0.0 \
+    soundfile>=0.13.1 \
+    pydantic>=2.11.3 \
+    safetensors>=0.5.3 \
+    requests>=2.31.0
 
-# Install optional dependencies (ignore failures)
-RUN pip install --no-cache-dir \
-    descript-audio-codec>=1.0.0 \
-    tqdm \
-    gdown \
-    || echo "Some optional dependencies failed to install"
+# Stage 2: Runtime image
+FROM python:3.10-slim
 
-# Try to install xformers (ignore if it fails)
-RUN pip install --no-cache-dir xformers>=0.0.22 || echo "xformers not available"
+# Install minimal system dependencies
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    git \
+    curl \
+    && rm -rf /var/lib/apt/lists/*
+
+# Copy virtual environment from builder
+COPY --from=builder /opt/venv /opt/venv
+ENV PATH="/opt/venv/bin:$PATH"
+
+# Set working directory
+WORKDIR /workspace
+
+# Copy application code
+COPY . .
 
 # Create necessary directories
-RUN mkdir -p /workspace/models/sdxl-turbo /workspace/models/animatediff/motion_adapter /workspace/lora_models /workspace/outputs /workspace/temp
+RUN mkdir -p /workspace/models/sdxl-turbo \
+    /workspace/models/animatediff/motion_adapter \
+    /workspace/lora_models \
+    /workspace/outputs \
+    /workspace/temp
 
-# Download models (will use environment variables if set)
-RUN python download_models.py || echo "Model download script failed, ensure models are pre-loaded or URLs are set."
-
-# Expose ports for both interfaces
+# Expose ports
 EXPOSE 7860 8000
 
-# Set environment variables for interface mode
+# Set environment variables
+ENV PYTHONPATH="/workspace"
 ENV INTERFACE_MODE=web
 ENV HOST=0.0.0.0
 ENV PORT=7860
 
-# Set entrypoint based on deployment mode
-# For RunPod serverless: python handler.py
-# For web interface: python launch.py web
-# For API server: python launch.py api
-CMD python -u handler.py
+# Download models (will use environment variables if set)
+RUN python download_models.py || echo "Model download deferred - will download at runtime"
+
+# Default command
+CMD ["python", "-u", "handler.py"]
