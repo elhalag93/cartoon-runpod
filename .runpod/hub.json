@@ -1,7 +1,7 @@
 {
-  "name": "Cartoon Animation Worker",
-  "description": "Generate cartoon character animations with voice using Dia TTS and AnimateDiff",
-  "version": "1.0.0",
+  "name": "Cartoon Animation Worker - High Quality",
+  "description": "Generate MAXIMUM QUALITY cartoon character animations with voice using Dia TTS and full SDXL AnimateDiff",
+  "version": "2.0.0",
   "category": "AI/ML",
   "tags": [
     "animation",
@@ -21,19 +21,19 @@
   "runtime": {
     "python_version": "3.10",
     "cuda_version": "12.1",
-    "pytorch_version": "2.6.0"
+    "pytorch_version": "2.1.0"
   },
   "resources": {
     "gpu_types": [
       "RTX A6000",
+      "A100", 
       "RTX 4090",
-      "RTX 3090",
-      "A40"
+      "RTX 3090"
     ],
     "gpu_count": 1,
     "cpu_count": 8,
-    "memory_gb": 32,
-    "disk_gb": 50
+    "memory_gb": 64,
+    "disk_gb": 100
   },
   "endpoints": [
     {
@@ -63,38 +63,38 @@
           },
           "num_frames": {
             "type": "integer",
-            "minimum": 8,
-            "maximum": 32,
-            "default": 16,
-            "description": "Number of animation frames"
+            "minimum": 12,
+            "maximum": 48,
+            "default": 24,
+            "description": "Number of animation frames (high quality)"
           },
           "fps": {
             "type": "integer",
             "minimum": 8,
-            "maximum": 12,
-            "default": 8,
-            "description": "Frames per second"
+            "maximum": 16,
+            "default": 12,
+            "description": "Frames per second (high quality)"
           },
           "width": {
             "type": "integer",
-            "minimum": 768,
+            "minimum": 512,
             "maximum": 1024,
-            "default": 512,
-            "description": "Output width in pixels"
+            "default": 768,
+            "description": "Output width in pixels (high quality)"
           },
           "height": {
             "type": "integer",
-            "minimum": 768,
+            "minimum": 512,
             "maximum": 1024,
-            "default": 512,
-            "description": "Output height in pixels"
+            "default": 768,
+            "description": "Output height in pixels (high quality)"
           },
           "guidance_scale": {
             "type": "number",
-            "minimum": 1.0,
-            "maximum": 15.0,
-            "default": 7.5,
-            "description": "Guidance scale for animation"
+            "minimum": 3.0,
+            "maximum": 20.0,
+            "default": 9.0,
+            "description": "Guidance scale for animation (high quality)"
           },
           "tts_guidance_scale": {
             "type": "number",
@@ -119,10 +119,10 @@
           },
           "num_inference_steps": {
             "type": "integer",
-            "minimum": 20,
-            "maximum": 30,
-            "default": 21,
-            "description": "Number of inference steps"
+            "minimum": 15,
+            "maximum": 50,
+            "default": 25,
+            "description": "Number of inference steps (high quality)"
           },
           "seed": {
             "type": "integer",

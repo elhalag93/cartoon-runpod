@@ -47,10 +47,24 @@ else:
     OUTPUT_DIR = Path("/workspace/outputs")
     TEMP_DIR = Path("/workspace/temp")
 
-# Model configuration
-DIA_MODEL_CHECKPOINT = "nari-labs/Dia-1.6B-0626"
-SDXL_MODEL_ID = "stabilityai/sdxl-turbo"
-MOTION_ADAPTER_ID = "guoyww/animatediff-motion-adapter-sdxl-beta"
+# Model configuration - HIGHEST QUALITY MODELS
+DIA_MODEL_CHECKPOINT = "nari-labs/Dia-1.6B-0626"  # Keep the best TTS model
+SDXL_MODEL_ID = "stabilityai/stable-diffusion-xl-base-1.0"  # Full SDXL for maximum quality
+MOTION_ADAPTER_ID = "guoyww/animatediff-motion-adapter-v1-5-2"  # Stable non-beta version
+CONTROLNET_MODEL_ID = "diffusers/controlnet-openpose-sdxl-1.0"  # For better character consistency
+
+# High Quality Generation Settings
+HIGH_QUALITY_DEFAULTS = {
+    "num_frames": 24,           # More frames for smoother motion
+    "fps": 12,                  # Higher framerate  
+    "width": 768,               # Higher resolution
+    "height": 768,              # Higher resolution
+    "guidance_scale": 9.0,      # Higher guidance for better prompt following
+    "num_inference_steps": 25,  # More steps for better quality
+    "tts_guidance_scale": 4.0,  # Higher TTS guidance
+    "max_new_tokens": 4096,     # Maximum tokens for best TTS quality
+    "temperature": 1.6,         # Slightly lower for more consistent voice
+}
 
 # Supported characters
 SUPPORTED_CHARACTERS = ["temo", "felfel"]
@@ -146,20 +160,20 @@ class ModelHandler:
         return self.dia_model, self.dia_processor
     
     def load_animation_pipeline(self):
-        """Load AnimateDiff pipeline with SDXL"""
-        print("🔄 Loading AnimateDiff pipeline...")
+        """Load HIGH QUALITY AnimateDiff pipeline with full SDXL"""
+        print("🔄 Loading HIGH QUALITY AnimateDiff pipeline...")
         device = "cuda" if torch.cuda.is_available() else "cpu"
         
         try:
-            # Load motion adapter
-            print("📥 Loading motion adapter...")
+            # Load motion adapter (stable version)
+            print("📥 Loading stable motion adapter...")
             self.motion_adapter = MotionAdapter.from_pretrained(
                 MOTION_ADAPTER_ID,
                 torch_dtype=torch.float16 if device == "cuda" else torch.float32
             )
             
-            # Load AnimateDiff pipeline
-            print("🔄 Creating AnimateDiff pipeline...")
+            # Load FULL SDXL AnimateDiff pipeline for maximum quality
+            print("🔄 Creating HIGH QUALITY AnimateDiff pipeline with full SDXL...")
             self.animation_pipeline = AnimateDiffSDXLPipeline.from_pretrained(
                 SDXL_MODEL_ID,
                 motion_adapter=self.motion_adapter,
@@ -170,17 +184,18 @@ class ModelHandler:
             
             self.animation_pipeline = self.animation_pipeline.to(device)
             
-            # Configure scheduler
+            # Configure scheduler for MAXIMUM QUALITY
             self.animation_pipeline.scheduler = DDIMScheduler.from_config(
                 self.animation_pipeline.scheduler.config,
-                beta_schedule="linear",
+                beta_schedule="scaled_linear",  # Better for quality
                 steps_offset=1,
                 clip_sample=False,
                 set_alpha_to_one=False,
-                skip_prk_steps=True
+                skip_prk_steps=True,
+                rescale_betas_zero_snr=True  # Improved quality
             )
             
-            # Enable memory optimizations for GPU (NO CPU OFFLOAD!)
+            # Quality-focused optimizations for HIGH-END GPU
             if device == "cuda":
                 try:
                     self.animation_pipeline.enable_xformers_memory_efficient_attention()
@@ -188,15 +203,17 @@ class ModelHandler:
                 except Exception:
                     print("⚠️ xFormers not available, using default attention")
                 
-                # KEEP MODELS ON GPU FOR MAXIMUM SPEED
-                # Only use attention slicing and VAE optimizations
-                self.animation_pipeline.enable_attention_slicing("max")
+                # QUALITY-FIRST GPU optimizations 
+                # Keep models on GPU, use minimal memory optimizations
                 self.animation_pipeline.enable_vae_slicing()
                 self.animation_pipeline.enable_vae_tiling()
                 
-                print("🚀 GPU optimizations enabled - models staying on GPU for maximum speed")
+                # Only use attention slicing if necessary (high VRAM usage)
+                # self.animation_pipeline.enable_attention_slicing("max")  # Comment out for max quality
+                
+                print("🚀 HIGH QUALITY mode enabled - maximum quality generation")
             
-            print("✅ AnimateDiff pipeline loaded successfully")
+            print("✅ HIGH QUALITY AnimateDiff pipeline loaded successfully")
         except Exception as e:
             print(f"❌ Error loading animation pipeline: {e}")
             raise
@@ -327,23 +344,23 @@ def validate_input(input_data: Dict[str, Any]) -> Dict[str, Any]:
             raise ValueError("dialogue_text is required for TTS generation")
         validated["dialogue_text"] = str(dialogue_text)[:1000]  # Limit text length
     
-    # Animation parameters
+    # Animation parameters - HIGH QUALITY DEFAULTS
     if task_type in ["animation", "combined"]:
-        validated["num_frames"] = max(4, min(32, input_data.get("num_frames", 16)))
-        validated["fps"] = max(4, min(12, input_data.get("fps", 8)))
-        validated["width"] = max(256, min(768, input_data.get("width", 512)))
-        validated["height"] = max(256, min(768, input_data.get("height", 512)))
-        validated["guidance_scale"] = max(1.0, min(15.0, input_data.get("guidance_scale", 7.5)))
-        validated["num_inference_steps"] = max(5, min(30, input_data.get("num_inference_steps", 15)))
-        validated["negative_prompt"] = input_data.get("negative_prompt", "blurry, low quality, distorted")
+        validated["num_frames"] = max(8, min(48, input_data.get("num_frames", HIGH_QUALITY_DEFAULTS["num_frames"])))
+        validated["fps"] = max(8, min(16, input_data.get("fps", HIGH_QUALITY_DEFAULTS["fps"])))
+        validated["width"] = max(512, min(1024, input_data.get("width", HIGH_QUALITY_DEFAULTS["width"])))
+        validated["height"] = max(512, min(1024, input_data.get("height", HIGH_QUALITY_DEFAULTS["height"])))
+        validated["guidance_scale"] = max(3.0, min(20.0, input_data.get("guidance_scale", HIGH_QUALITY_DEFAULTS["guidance_scale"])))
+        validated["num_inference_steps"] = max(15, min(50, input_data.get("num_inference_steps", HIGH_QUALITY_DEFAULTS["num_inference_steps"])))
+        validated["negative_prompt"] = input_data.get("negative_prompt", "blurry, low quality, distorted, deformed, ugly, bad anatomy, disfigured, poorly drawn face, mutation, mutated, extra limb, ugly, disgusting, poorly drawn hands, missing limb, floating limbs, disconnected limbs, malformed hands, blurry, ((((mutated hands and fingers)))), watermark, watermarked, oversaturated, censored, distorted hands, amputation, missing hands, obese, doubled face, double hands")
     
-    # TTS parameters
+    # TTS parameters - HIGH QUALITY DEFAULTS  
     if task_type in ["tts", "combined"]:
-        validated["max_new_tokens"] = max(512, min(4096, input_data.get("max_new_tokens", 3072)))
-        validated["tts_guidance_scale"] = max(1.0, min(10.0, input_data.get("tts_guidance_scale", 3.0)))
-        validated["temperature"] = max(0.1, min(2.0, input_data.get("temperature", 1.8)))
+        validated["max_new_tokens"] = max(1024, min(6144, input_data.get("max_new_tokens", HIGH_QUALITY_DEFAULTS["max_new_tokens"])))
+        validated["tts_guidance_scale"] = max(1.0, min(10.0, input_data.get("tts_guidance_scale", HIGH_QUALITY_DEFAULTS["tts_guidance_scale"])))
+        validated["temperature"] = max(0.5, min(2.0, input_data.get("temperature", HIGH_QUALITY_DEFAULTS["temperature"])))
         validated["top_p"] = max(0.1, min(1.0, input_data.get("top_p", 0.9)))
-        validated["top_k"] = max(1, min(100, input_data.get("top_k", 45)))
+        validated["top_k"] = max(1, min(100, input_data.get("top_k", 50)))
     
     # Seed handling
     seed = input_data.get("seed")
@@ -357,11 +374,11 @@ def validate_input(input_data: Dict[str, Any]) -> Dict[str, Any]:
 @torch.inference_mode()
 def generate_tts(
     dialogue_text: str,
-    max_new_tokens: int = 3072,
-    tts_guidance_scale: float = 3.0,
-    temperature: float = 1.8,
+    max_new_tokens: int = 4096,    # High quality default
+    tts_guidance_scale: float = 4.0,  # High quality default
+    temperature: float = 1.6,      # High quality default
     top_p: float = 0.9,
-    top_k: int = 45,
+    top_k: int = 50,               # High quality default
     seed: int = 42,
     **kwargs
 ) -> Dict[str, Any]:
@@ -418,13 +435,13 @@ def generate_tts(
 def generate_animation(
     character: str,
     prompt: str,
-    num_frames: int = 16,
-    fps: int = 8,
-    width: int = 512,
-    height: int = 512,
-    guidance_scale: float = 7.5,
-    num_inference_steps: int = 15,
-    negative_prompt: str = "blurry, low quality, distorted",
+    num_frames: int = 24,  # High quality default
+    fps: int = 12,         # High quality default
+    width: int = 768,      # High quality default
+    height: int = 768,     # High quality default
+    guidance_scale: float = 9.0,      # High quality default
+    num_inference_steps: int = 25,    # High quality default
+    negative_prompt: str = "blurry, low quality, distorted, deformed, ugly, bad anatomy, disfigured, poorly drawn face, mutation, mutated, extra limb, ugly, disgusting, poorly drawn hands, missing limb, floating limbs, disconnected limbs, malformed hands, blurry, ((((mutated hands and fingers)))), watermark, watermarked, oversaturated, censored, distorted hands, amputation, missing hands, obese, doubled face, double hands",
     seed: int = 42,
     **kwargs
 ) -> Dict[str, Any]:

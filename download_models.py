@@ -9,9 +9,10 @@ import subprocess
 MODELS_DIR = pathlib.Path("/workspace/models")
 LORA_DIR = pathlib.Path("/workspace/lora_models")
 
-# Base model URLs (SDXL Turbo + AnimateDiff motion adapter + ControlNet)
-SDXL_TURBO_URL = os.getenv("SDXL_TURBO_URL", "https://huggingface.co/stabilityai/sdxl-turbo/resolve/main/sdxl_turbo.safetensors")
-MOTION_ADAPTER_URL = os.getenv("MOTION_ADAPTER_URL", "https://huggingface.co/guoyww/animatediff-motion-adapter-sdxl-beta/resolve/main/diffusion_pytorch_model.safetensors")
+# HIGH QUALITY BASE MODEL URLs
+SDXL_BASE_URL = os.getenv("SDXL_BASE_URL", "https://huggingface.co/stabilityai/stable-diffusion-xl-base-1.0/resolve/main/sd_xl_base_1.0.safetensors")
+SDXL_VAE_URL = os.getenv("SDXL_VAE_URL", "https://huggingface.co/stabilityai/stable-diffusion-xl-base-1.0/resolve/main/sd_xl_base_1.0_0.9vae.safetensors")
+MOTION_ADAPTER_URL = os.getenv("MOTION_ADAPTER_URL", "https://huggingface.co/guoyww/animatediff-motion-adapter-v1-5-2/resolve/main/diffusion_pytorch_model.safetensors")
 CONTROLNET_URL = os.getenv("CONTROLNET_URL", "https://huggingface.co/diffusers/controlnet-openpose-sdxl-1.0/resolve/main/diffusion_pytorch_model.safetensors")
 
 # LoRA weight URLs – you can override via env vars for private links
@@ -21,14 +22,11 @@ FELFEL_LORA_URL = os.getenv("FELFEL_LORA_URL")  # required
 # Google Drive URL for LoRA models
 GOOGLE_DRIVE_LORA_URL = "https://drive.google.com/drive/folders/1k-LT9g4GjguFuxxTMjpMdf1CGYFoRpEJ?usp=sharing"
 
-CONTROLNET_POSE_REPO = "lllyasviel/ControlNet-v1-1"  # Example repo for pose ControlNet
-CONTROLNET_POSE_MODEL = "controlnet_pose.pth"  # Example filename
-CONTROLNET_POSE_DIR = os.path.join("models", "controlnet")
-
 DOWNLOADS = [
     # (url, destination path)
-    (SDXL_TURBO_URL, MODELS_DIR / "sdxl-turbo" / "sdxl_turbo.safetensors"),
-    (MOTION_ADAPTER_URL, MODELS_DIR / "animatediff" / "motion_adapter" / "diffusion_pytorch_model.safetensors"),
+    (SDXL_BASE_URL, MODELS_DIR / "stable-diffusion-xl-base-1.0" / "sd_xl_base_1.0.safetensors"),
+    (SDXL_VAE_URL, MODELS_DIR / "stable-diffusion-xl-base-1.0" / "sd_xl_base_1.0_0.9vae.safetensors"),
+    (MOTION_ADAPTER_URL, MODELS_DIR / "animatediff" / "motion_adapter_v1_5_2" / "diffusion_pytorch_model.safetensors"),
     (CONTROLNET_URL, MODELS_DIR / "controlnet-openpose-sdxl" / "diffusion_pytorch_model.safetensors"),
 ]
 
@@ -45,7 +43,7 @@ def fetch(url: str, dest: pathlib.Path):
         print(f"✔ {dest} already exists, skipping download")
         return
 
-    print(f"⬇ Downloading {url} → {dest}")
+    print(f"⬇ Downloading HIGH QUALITY model: {url} → {dest}")
     with requests.get(url, stream=True) as r:
         r.raise_for_status()
         total = int(r.headers.get("Content-Length", 0))
@@ -54,35 +52,58 @@ def fetch(url: str, dest: pathlib.Path):
                 if chunk:
                     f.write(chunk)
                     bar.update(len(chunk))
-    print(f"✅ Saved {dest}")
+    print(f"✅ Downloaded HIGH QUALITY model: {dest}")
 
 
 def download_from_google_drive(url, output_path):
+    """Download LoRA models from Google Drive"""
+    print(f"⬇ Downloading from Google Drive: {url}")
     gdown.download_folder(url, output=output_path, quiet=False, use_cookies=False)
 
 
-def download_controlnet_pose():
-    os.makedirs(CONTROLNET_POSE_DIR, exist_ok=True)
-    model_path = os.path.join(CONTROLNET_POSE_DIR, CONTROLNET_POSE_MODEL)
-    if not os.path.exists(model_path):
-        print(f"Downloading ControlNet pose model to {model_path}...")
-        # Example using huggingface-cli; replace with actual download logic as needed
+def download_huggingface_model(repo_id, local_dir):
+    """Download complete model from HuggingFace using git clone"""
+    print(f"⬇ Downloading complete model: {repo_id}")
+    try:
         subprocess.run([
-            "huggingface-cli", "download", CONTROLNET_POSE_REPO, "--filename", CONTROLNET_POSE_MODEL, "--local-dir", CONTROLNET_POSE_DIR
+            "git", "clone", f"https://huggingface.co/{repo_id}", str(local_dir)
         ], check=True)
-    else:
-        print(f"ControlNet pose model already exists at {model_path}")
+        print(f"✅ Model downloaded: {local_dir}")
+    except subprocess.CalledProcessError as e:
+        print(f"❌ Failed to download {repo_id}: {e}")
 
 
 def main():
+    print("🚀 Downloading HIGH QUALITY models for maximum animation quality...")
+    
     missing_private = [name for name, url in [("TEMO_LORA_URL", TEMO_LORA_URL), ("FELFEL_LORA_URL", FELFEL_LORA_URL)] if url is None]
     if missing_private:
         print("⚠ WARNING: Missing env vars for private LoRA URLs –" + ", ".join(missing_private))
+    
+    # Download individual model files
     for url, dest in DOWNLOADS:
         if url is None:
             print(f"⚠ Skipping download for {dest.name} (no URL)")
             continue
         fetch(url, dest)
+    
+    # Download complete models from HuggingFace (better for quality)
+    print("\n🔄 Downloading complete HIGH QUALITY models from HuggingFace...")
+    
+    # Full SDXL Base model
+    sdxl_dir = MODELS_DIR / "stable-diffusion-xl-base-1.0"
+    if not sdxl_dir.exists():
+        download_huggingface_model("stabilityai/stable-diffusion-xl-base-1.0", sdxl_dir)
+    
+    # Stable motion adapter
+    motion_dir = MODELS_DIR / "animatediff-motion-adapter-v1-5-2"
+    if not motion_dir.exists():
+        download_huggingface_model("guoyww/animatediff-motion-adapter-v1-5-2", motion_dir)
+    
+    # ControlNet for pose guidance
+    controlnet_dir = MODELS_DIR / "controlnet-openpose-sdxl-1.0"
+    if not controlnet_dir.exists():
+        download_huggingface_model("diffusers/controlnet-openpose-sdxl-1.0", controlnet_dir)
 
     # Always try to download LoRA models from Google Drive if folders don't exist
     if not os.path.exists('/workspace/lora_models/felfel_lora'):
@@ -93,7 +114,8 @@ def main():
         print("⬇ Downloading Temo LoRA from Google Drive...")
         download_from_google_drive(GOOGLE_DRIVE_LORA_URL + '/temo_lora', '/workspace/lora_models/temo_lora')
 
-    download_controlnet_pose()
+    print("\n🎉 All HIGH QUALITY models downloaded successfully!")
+    print("💎 Your system is now configured for MAXIMUM QUALITY animation generation!")
 
 
 if __name__ == "__main__":
