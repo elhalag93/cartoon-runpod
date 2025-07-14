@@ -1,6 +1,6 @@
-name: cartoon-animation-worker-ultra-hq
-description: "Generate ULTRA HIGH QUALITY 1024x1024 cartoon character animations with voice using Dia TTS and AnimateDiff - Maximum Quality Mode"
-version: "3.0.0"
+name: cartoon-animation-worker-multi-character
+description: "Generate MULTI-CHARACTER 1024x1024 cartoon animations with both Temo and Felfel - Ultra High Quality with Multi-Character Support"
+version: "2.0.0"
 
 runtime:
   python_version: "3.10"

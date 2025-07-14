@@ -1,7 +1,7 @@
 {
-  "name": "Cartoon Animation Worker - Ultra High Quality 1024x1024",
-  "description": "Generate ULTRA HIGH QUALITY 1024x1024 cartoon character animations with voice using Dia TTS and full SDXL AnimateDiff",
-  "version": "3.0.0",
+  "name": "Cartoon Animation Worker - Multi-Character Support v2.0",
+  "description": "Generate MULTI-CHARACTER 1024x1024 cartoon animations with both Temo and Felfel characters in the same scene using Dia TTS and full SDXL AnimateDiff",
+  "version": "2.0.0",
   "category": "AI/ML",
   "tags": [
     "animation",
