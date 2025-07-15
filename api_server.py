@@ -46,7 +46,8 @@ app.add_middleware(
 
 # Pydantic models for request/response
 class AnimationRequest(BaseModel):
-    character: str = Field(..., description="Character name (temo, felfel)")
+    character: Optional[str] = Field(None, description="Single character name (temo, felfel) - for backward compatibility")
+    characters: Optional[List[str]] = Field(None, description="List of characters for multi-character animations")
     prompt: str = Field(..., description="Animation prompt")
     negative_prompt: str = Field("blurry, low quality", description="Negative prompt")
     num_frames: int = Field(32, ge=16, le=64, description="Number of frames (ultra quality)")
@@ -67,7 +68,8 @@ class TTSRequest(BaseModel):
     seed: Optional[int] = Field(None, description="Random seed")
 
 class CombinedRequest(BaseModel):
-    character: str = Field(..., description="Character name")
+    character: Optional[str] = Field(None, description="Single character name - for backward compatibility")
+    characters: Optional[List[str]] = Field(None, description="List of characters for multi-character animations")
     prompt: str = Field(..., description="Animation prompt")
     dialogue_text: str = Field(..., description="Text to convert to speech")
     num_frames: int = Field(32, ge=16, le=64, description="Number of frames (ultra quality)")
@@ -142,10 +144,24 @@ async def generate_animation_endpoint(request: AnimationRequest):
         if not models_status["animation_pipeline"]:
             raise HTTPException(status_code=503, detail="Animation pipeline not loaded")
         
-        logger.info(f"🎬 Generating animation for {request.character}")
+        # Handle character selection (backward compatibility + multi-character support)
+        if request.characters:
+            characters = request.characters
+            char_display = " + ".join(characters)
+        elif request.character:
+            characters = [request.character]
+            char_display = request.character
+        else:
+            raise HTTPException(status_code=400, detail="Either 'character' or 'characters' must be provided")
         
-        # Convert request to dict
+        logger.info(f"🎬 Generating animation for {char_display}")
+        
+        # Convert request to dict and update characters
         params = request.dict()
+        params["characters"] = characters
+        # Remove the old single character field to avoid conflicts
+        if "character" in params:
+            del params["character"]
         
         # Generate animation
         result = generate_animation(**params)
@@ -210,10 +226,24 @@ async def generate_combined_endpoint(request: CombinedRequest):
         if not models_status["animation_pipeline"] or not models_status["tts_model"]:
             raise HTTPException(status_code=503, detail="Models not loaded")
         
-        logger.info(f"🎬🎵 Generating combined for {request.character}")
+        # Handle character selection (backward compatibility + multi-character support)
+        if request.characters:
+            characters = request.characters
+            char_display = " + ".join(characters)
+        elif request.character:
+            characters = [request.character]
+            char_display = request.character
+        else:
+            raise HTTPException(status_code=400, detail="Either 'character' or 'characters' must be provided")
         
-        # Convert request to dict
+        logger.info(f"🎬🎵 Generating combined for {char_display}")
+        
+        # Convert request to dict and update characters
         params = request.dict()
+        params["characters"] = characters
+        # Remove the old single character field to avoid conflicts
+        if "character" in params:
+            del params["character"]
         
         # Generate combined
         result = generate_combined(**params)
@@ -258,16 +288,32 @@ async def get_characters():
                 "description": "Adventure character",
                 "default_prompt": "felfel character exploring magical forest, fantasy adventure, detailed cartoon style"
             }
-        ]
+        ],
+        "multi_character_support": {
+            "description": "Both characters can appear together in the same animation",
+            "usage": "Use 'characters': ['temo', 'felfel'] for multi-character scenes",
+            "default_prompt": "temo and felfel characters working together on moon base, both characters clearly visible, epic lighting, detailed cartoon style"
+        }
     }
 
 @app.get("/api/examples")
 async     def get_examples():
         """Get example requests"""
         return {
-            "animation_example": {
+            "single_character_animation": {
                 "character": "temo",
                 "prompt": "temo character walking on moon surface, space adventure, ultra high quality, 4K resolution",
+                "num_frames": 32,
+                "fps": 16,
+                "width": 1024,
+                "height": 1024,
+                "guidance_scale": 12.0,
+                "num_inference_steps": 50,
+                "seed": 42
+            },
+            "multi_character_animation": {
+                "characters": ["temo", "felfel"],
+                "prompt": "temo and felfel characters working together on moon base, both characters clearly visible, temo in space suit on left, felfel in adventure gear on right, epic lighting, detailed cartoon style",
                 "num_frames": 32,
                 "fps": 16,
                 "width": 1024,
@@ -279,14 +325,29 @@ async     def get_examples():
             "tts_example": {
                 "dialogue_text": "[S1] Hello from the moon with crystal clear audio! [S2] What an amazing ultra quality adventure!",
                 "max_new_tokens": 4096,
+                "guidance_scale": 5.0,
+                "temperature": 1.4,
+                "seed": 42
+            },
+            "single_character_combined": {
+                "character": "temo",
+                "prompt": "temo character waving hello from moon, ultra high quality, masterpiece animation",
+                "dialogue_text": "[S1] Greetings from the lunar surface with perfect audio!",
+                "num_frames": 32,
+                "fps": 16,
+                "width": 1024,
+                "height": 1024,
+                "guidance_scale": 12.0,
+                "num_inference_steps": 50,
+                "max_new_tokens": 4096,
                 "tts_guidance_scale": 5.0,
                 "temperature": 1.4,
                 "seed": 42
             },
-            "combined_example": {
-                "character": "temo",
-                "prompt": "temo character waving hello from moon, ultra high quality, masterpiece animation",
-                "dialogue_text": "[S1] Greetings from the lunar surface with perfect audio!",
+            "multi_character_combined": {
+                "characters": ["temo", "felfel"],
+                "prompt": "temo and felfel characters working together on moon base, both characters clearly visible, epic lighting, detailed cartoon style",
+                "dialogue_text": "[S1] Temo: Welcome to our lunar base, Felfel! [S2] Felfel: This technology is incredible, Temo! [S1] Temo: Let's explore together!",
                 "num_frames": 32,
                 "fps": 16,
                 "width": 1024,

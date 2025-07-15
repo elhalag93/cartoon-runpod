@@ -1,10 +1,28 @@
 {
-  "single_character_example": {
+  "single_character_temo_example": {
     "input": {
       "task_type": "combined",
       "character": "temo",
-      "prompt": "REPLACE_WITH_YOUR_ANIMATION_PROMPT - Example: temo character dancing on moon surface with epic lighting, detailed cartoon style, smooth fluid animation, masterpiece quality",
-      "dialogue_text": "[S1] REPLACE_WITH_YOUR_DIALOGUE - Example: Hello from the moon! [S2] What an amazing adventure this is!",
+      "prompt": "REPLACE_WITH_YOUR_ANIMATION_PROMPT - Example: temo character exploring space station with epic lighting, detailed cartoon style, smooth fluid animation, masterpiece quality",
+      "dialogue_text": "[S1] REPLACE_WITH_YOUR_DIALOGUE - Example: Greetings from the space station! [S2] What an incredible view of Earth!",
+      "num_frames": 32,
+      "fps": 16,
+      "width": 1024,
+      "height": 1024,
+      "guidance_scale": 12.0,
+      "num_inference_steps": 50,
+      "max_new_tokens": 4096,
+      "tts_guidance_scale": 5.0,
+      "temperature": 1.4,
+      "seed": 42
+    }
+  },
+  "single_character_felfel_example": {
+    "input": {
+      "task_type": "combined",
+      "character": "felfel",
+      "prompt": "REPLACE_WITH_YOUR_ANIMATION_PROMPT - Example: felfel character discovering magical crystal cave with epic lighting, detailed cartoon style, smooth fluid animation, masterpiece quality",
+      "dialogue_text": "[S1] REPLACE_WITH_YOUR_DIALOGUE - Example: Look at these amazing crystal formations! [S2] This cave is truly magical!",
       "num_frames": 32,
       "fps": 16,
       "width": 1024,
@@ -33,6 +51,38 @@
       "tts_guidance_scale": 5.0,
       "temperature": 1.4,
       "seed": 42
+    }
+  },
+  "animation_only_multi_character": {
+    "input": {
+      "task_type": "animation",
+      "characters": ["temo", "felfel"],
+      "prompt": "REPLACE_WITH_YOUR_ANIMATION_PROMPT - Example: temo and felfel characters exploring alien planet together, both characters clearly visible, epic adventure scene, detailed cartoon style, smooth animation, masterpiece quality",
+      "num_frames": 32,
+      "fps": 16,
+      "width": 1024,
+      "height": 1024,
+      "guidance_scale": 12.0,
+      "num_inference_steps": 50,
+      "seed": 42
+    }
+  },
+  "usage_notes": {
+    "single_character": {
+      "use": "character: 'temo' or 'felfel'",
+      "description": "Single character appears in the animation"
+    },
+    "multi_character": {
+      "use": "characters: ['temo', 'felfel']",
+      "description": "Both characters appear together in the same animation with equal representation"
+    },
+    "prompting_tips": {
+      "single_character": "Focus on one character's actions and environment",
+      "multi_character": "Describe both characters and their interaction, specify positions (left/right) for better composition"
+    },
+    "dialogue_tips": {
+      "single_character": "Use [S1] and [S2] for variety, but focus on the chosen character's voice",
+      "multi_character": "Use [S1] for Temo and [S2] for Felfel, or mix for natural conversation"
     }
   }
 } 

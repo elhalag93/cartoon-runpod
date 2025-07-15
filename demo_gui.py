@@ -7,10 +7,10 @@ Shows all the controls for entering prompts and parameters
 import gradio as gr
 import json
 import time
-from typing import Optional, Dict, Any, Tuple
+from typing import Optional, Dict, Any, Tuple, Union, List
 
 def demo_generate_animation(
-    character: str,
+    character_selection: str,
     prompt: str,
     negative_prompt: str,
     num_frames: int,
@@ -26,10 +26,19 @@ def demo_generate_animation(
     # Simulate processing time
     time.sleep(2)
     
+    # Handle character selection
+    if character_selection == "Both (Multi-Character)":
+        characters = ["temo", "felfel"]
+        character_display = "temo_and_felfel"
+    else:
+        characters = [character_selection.lower()]
+        character_display = character_selection.lower()
+    
     # Create demo response
     result = {
         "task_type": "animation",
-        "character": character,
+        "characters": characters,
+        "character": character_display,
         "prompt": prompt,
         "negative_prompt": negative_prompt,
         "num_frames": num_frames,
@@ -39,17 +48,29 @@ def demo_generate_animation(
         "guidance_scale": guidance_scale,
         "num_inference_steps": num_inference_steps,
         "seed": seed if seed else 42,
-        "status": "Demo mode - showing parameter controls"
+        "status": "Demo mode - showing parameter controls",
+        "multi_character": len(characters) > 1
     }
     
-    status = f"✅ Demo Complete! Your settings:\n" \
-             f"Character: {character}\n" \
-             f"Prompt: {prompt[:50]}...\n" \
-             f"Frames: {num_frames} at {fps} FPS\n" \
-             f"Resolution: {width}x{height}\n" \
-             f"Guidance: {guidance_scale}\n" \
-             f"Steps: {num_inference_steps}\n" \
-             f"Seed: {result['seed']}"
+    if len(characters) > 1:
+        status = f"✅ Demo Complete! MULTI-CHARACTER Mode:\n" \
+                 f"Characters: {' + '.join(characters).upper()}\n" \
+                 f"Prompt: {prompt[:50]}...\n" \
+                 f"Frames: {num_frames} at {fps} FPS\n" \
+                 f"Resolution: {width}x{height}\n" \
+                 f"Guidance: {guidance_scale}\n" \
+                 f"Steps: {num_inference_steps}\n" \
+                 f"Seed: {result['seed']}\n" \
+                 f"🎭 BOTH characters will appear together!"
+    else:
+        status = f"✅ Demo Complete! Single Character Mode:\n" \
+                 f"Character: {character_display.upper()}\n" \
+                 f"Prompt: {prompt[:50]}...\n" \
+                 f"Frames: {num_frames} at {fps} FPS\n" \
+                 f"Resolution: {width}x{height}\n" \
+                 f"Guidance: {guidance_scale}\n" \
+                 f"Steps: {num_inference_steps}\n" \
+                 f"Seed: {result['seed']}"
     
     info = json.dumps(result, indent=2)
     
@@ -93,7 +114,7 @@ def demo_generate_tts(
     return None, status, info
 
 def demo_generate_combined(
-    character: str,
+    character_selection: str,
     prompt: str,
     dialogue_text: str,
     num_frames: int,
@@ -111,9 +132,18 @@ def demo_generate_combined(
     
     time.sleep(3)
     
+    # Handle character selection
+    if character_selection == "Both (Multi-Character)":
+        characters = ["temo", "felfel"]
+        character_display = "temo_and_felfel"
+    else:
+        characters = [character_selection.lower()]
+        character_display = character_selection.lower()
+    
     result = {
         "task_type": "combined",
-        "character": character,
+        "characters": characters,
+        "character": character_display,
         "prompt": prompt,
         "dialogue_text": dialogue_text,
         "animation_settings": {
@@ -130,22 +160,57 @@ def demo_generate_combined(
             "temperature": temperature
         },
         "seed": seed if seed else 168,
-        "status": "Demo mode - showing combined controls"
+        "status": "Demo mode - showing combined controls",
+        "multi_character": len(characters) > 1
     }
     
-    status = f"✅ Demo Combined Complete!\n" \
-             f"Character: {character}\n" \
-             f"Animation: {prompt[:30]}...\n" \
-             f"Dialogue: {dialogue_text[:30]}...\n" \
-             f"Resolution: {width}x{height}\n" \
-             f"Frames: {num_frames} at {fps} FPS\n" \
-             f"Animation Guidance: {guidance_scale}\n" \
-             f"TTS Guidance: {tts_guidance_scale}\n" \
-             f"Seed: {result['seed']}"
+    if len(characters) > 1:
+        status = f"✅ Demo Combined Complete! MULTI-CHARACTER:\n" \
+                 f"Characters: {' + '.join(characters).upper()}\n" \
+                 f"Animation: {prompt[:30]}...\n" \
+                 f"Dialogue: {dialogue_text[:30]}...\n" \
+                 f"Resolution: {width}x{height}\n" \
+                 f"Frames: {num_frames} at {fps} FPS\n" \
+                 f"Animation Guidance: {guidance_scale}\n" \
+                 f"TTS Guidance: {tts_guidance_scale}\n" \
+                 f"Seed: {result['seed']}\n" \
+                 f"🎭 BOTH characters appear together!"
+    else:
+        status = f"✅ Demo Combined Complete!\n" \
+                 f"Character: {character_display.upper()}\n" \
+                 f"Animation: {prompt[:30]}...\n" \
+                 f"Dialogue: {dialogue_text[:30]}...\n" \
+                 f"Resolution: {width}x{height}\n" \
+                 f"Frames: {num_frames} at {fps} FPS\n" \
+                 f"Animation Guidance: {guidance_scale}\n" \
+                 f"TTS Guidance: {tts_guidance_scale}\n" \
+                 f"Seed: {result['seed']}"
     
     info = json.dumps(result, indent=2)
     
     return None, None, None, status, info
+
+def update_prompt_for_characters(character_selection: str) -> str:
+    """Update prompt suggestions based on character selection"""
+    if character_selection == "Both (Multi-Character)":
+        return "temo and felfel characters working together on moon base, both characters clearly visible, temo in space suit on left, felfel in adventure gear on right, epic lighting, detailed cartoon style"
+    elif character_selection == "Temo":
+        return "temo character walking confidently on moon surface with epic cinematic lighting, detailed cartoon style, space helmet reflecting Earth"
+    elif character_selection == "Felfel":
+        return "felfel character exploring magical crystal cave with epic cinematic lighting, ultra detailed cartoon style, masterpiece quality"
+    else:
+        return ""
+
+def update_dialogue_for_characters(character_selection: str) -> str:
+    """Update dialogue suggestions based on character selection"""
+    if character_selection == "Both (Multi-Character)":
+        return "[S1] Temo: Welcome to our lunar base, Felfel! [S2] Felfel: This technology is incredible, Temo! [S1] Temo: Let's explore together!"
+    elif character_selection == "Temo":
+        return "[S1] Greetings from the lunar surface with crystal clear audio! [S2] What an amazing space adventure!"
+    elif character_selection == "Felfel":
+        return "[S1] Look at this magical crystal cave! [S2] The formations are absolutely breathtaking!"
+    else:
+        return ""
 
 def create_demo_interface():
     """Create the demo interface showing all controls"""
@@ -164,6 +229,14 @@ def create_demo_interface():
         background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
         color: white;
     }
+    .multi-character-card {
+        border: 2px solid #FF6B35;
+        border-radius: 10px;
+        padding: 15px;
+        margin: 10px 0;
+        background: linear-gradient(135deg, #FF6B35 0%, #F7931E 100%);
+        color: white;
+    }
     .result-container {
         border: 1px solid #ddd;
         border-radius: 8px;
@@ -180,6 +253,15 @@ def create_demo_interface():
         margin: 10px 0;
         text-align: center;
     }
+    .multi-character-notice {
+        background-color: #d1ecf1;
+        border: 1px solid #bee5eb;
+        color: #0c5460;
+        padding: 12px;
+        border-radius: 8px;
+        margin: 10px 0;
+        text-align: center;
+    }
     """
     
     with gr.Blocks(css=css, title="🎬 Cartoon Animation Studio - Demo", theme=gr.themes.Soft()) as interface:
@@ -190,6 +272,7 @@ def create_demo_interface():
             <h1>🎬 Cartoon Animation Studio - Demo Mode</h1>
             <p>See all the controls for entering prompts and parameters</p>
             <p><strong>Characters:</strong> Temo (Space Explorer) & Felfel (Adventure Seeker)</p>
+            <p><strong>✨ NEW:</strong> Multi-Character Support - Both characters together!</p>
         </div>
         """)
         
@@ -198,6 +281,14 @@ def create_demo_interface():
         <div class="demo-notice">
             <strong>📋 DEMO MODE:</strong> This shows all the parameter controls you'll have in the full system.
             In production, these controls will generate actual animations and audio!
+        </div>
+        """)
+        
+        # Multi-character notice
+        gr.HTML("""
+        <div class="multi-character-notice">
+            <strong>🎭 MULTI-CHARACTER FEATURE:</strong> You can now select "Both" to have Temo AND Felfel appear together in the same animation! 
+            Perfect for character interactions and conversations.
         </div>
         """)
         
@@ -211,10 +302,10 @@ def create_demo_interface():
                         gr.HTML('<div class="character-card"><h3>🎭 Character & Prompt Controls</h3></div>')
                         
                         anim_character = gr.Dropdown(
-                            choices=["temo", "felfel"],
-                            value="temo",
-                            label="Character",
-                            info="Choose Temo (space) or Felfel (adventure)"
+                            choices=["Temo", "Felfel", "Both (Multi-Character)"],
+                            value="Temo",
+                            label="Character Selection",
+                            info="Choose single character or both together"
                         )
                         
                         anim_prompt = gr.Textbox(
@@ -304,26 +395,27 @@ def create_demo_interface():
             with gr.TabItem("🎬🎵 Animation + Speech (BEST)"):
                 with gr.Row():
                     with gr.Column(scale=1):
-                        gr.HTML('<div class="character-card"><h3>🎭 Combined Content Controls</h3></div>')
+                        gr.HTML('<div class="multi-character-card"><h3>🎭 Combined Content Controls</h3></div>')
                         
                         comb_character = gr.Dropdown(
-                            choices=["temo", "felfel"],
-                            value="felfel",
-                            label="Character"
+                            choices=["Temo", "Felfel", "Both (Multi-Character)"],
+                            value="Both (Multi-Character)",
+                            label="Character Selection",
+                            info="Choose single character or both together"
                         )
                         
                         comb_prompt = gr.Textbox(
                             label="🎬 Animation Prompt (YOUR VISUAL)",
                             placeholder="Describe the character's actions...",
                             lines=2,
-                            value="felfel character exploring magical crystal cave with epic cinematic lighting, ultra detailed cartoon style, masterpiece quality"
+                            value="temo and felfel characters working together on moon base, both characters clearly visible, temo in space suit on left, felfel in adventure gear on right, epic lighting, detailed cartoon style"
                         )
                         
                         comb_dialogue = gr.Textbox(
                             label="🎵 Dialogue Text (YOUR AUDIO)",
                             placeholder="Enter speech with [S1] [S2] tags...",
                             lines=3,
-                            value="[S1] Felfel discovers an incredible crystal cave! [S2] Look at these magnificent formations sparkling in the light. [S1] (gasps in wonder) This is absolutely breathtaking!",
+                            value="[S1] Temo: Welcome to our lunar base, Felfel! [S2] Felfel: This technology is incredible, Temo! [S1] Temo: Let's explore together!",
                             info="Use [S1] and [S2] tags for different speakers"
                         )
                         
@@ -364,7 +456,26 @@ def create_demo_interface():
                         comb_status = gr.Textbox(label="📊 Generation Status", interactive=False, lines=10)
                         comb_info = gr.JSON(label="🔍 All Settings", visible=True)
         
-        # Event handlers
+        # Event handlers for character selection updates
+        anim_character.change(
+            update_prompt_for_characters,
+            inputs=[anim_character],
+            outputs=[anim_prompt]
+        )
+        
+        comb_character.change(
+            update_prompt_for_characters,
+            inputs=[comb_character],
+            outputs=[comb_prompt]
+        )
+        
+        comb_character.change(
+            update_dialogue_for_characters,
+            inputs=[comb_character],
+            outputs=[comb_dialogue]
+        )
+        
+        # Event handlers for generation
         anim_generate_btn.click(
             demo_generate_animation,
             inputs=[anim_character, anim_prompt, anim_negative, anim_frames, anim_fps, 
@@ -391,11 +502,17 @@ def create_demo_interface():
         gr.HTML("""
         <div style="text-align: center; padding: 20px; border-top: 1px solid #ddd; margin-top: 30px;">
             <h3>🎯 How to Use These Controls</h3>
-            <p><strong>1. Enter Your Prompt:</strong> Describe what you want the character to do</p>
-            <p><strong>2. Add Dialogue:</strong> Use [S1] and [S2] tags for different speakers</p>
-            <p><strong>3. Adjust Quality:</strong> More frames & steps = higher quality (slower generation)</p>
-            <p><strong>4. Set Resolution:</strong> 1024x1024 for ultra quality, 512x512 for speed</p>
-            <p><strong>5. Use Seeds:</strong> Same seed = identical results for reproducibility</p>
+            <p><strong>1. Choose Characters:</strong> Select single character or "Both" for multi-character scenes</p>
+            <p><strong>2. Enter Your Prompt:</strong> Describe what you want the character(s) to do</p>
+            <p><strong>3. Add Dialogue:</strong> Use [S1] and [S2] tags for different speakers</p>
+            <p><strong>4. Adjust Quality:</strong> More frames & steps = higher quality (slower generation)</p>
+            <p><strong>5. Set Resolution:</strong> 1024x1024 for ultra quality, 512x512 for speed</p>
+            <p><strong>6. Use Seeds:</strong> Same seed = identical results for reproducibility</p>
+            <hr>
+            <h4>🎭 Multi-Character Mode:</h4>
+            <p><strong>• Both Characters:</strong> Temo AND Felfel appear together in the same animation</p>
+            <p><strong>• Character Interactions:</strong> Perfect for conversations and collaborations</p>
+            <p><strong>• Equal Representation:</strong> Both characters get equal visual prominence</p>
             <hr>
             <p><em>💡 In production mode, these controls generate real videos and audio!</em></p>
         </div>
@@ -406,6 +523,7 @@ def create_demo_interface():
 if __name__ == "__main__":
     print("🎬 Starting Cartoon Animation Studio Demo...")
     print("📋 This demo shows all the parameter controls you'll have")
+    print("🎭 NEW: Multi-character support - both Temo and Felfel together!")
     print("🚀 In production, these will generate real animations!")
     
     demo_interface = create_demo_interface()
