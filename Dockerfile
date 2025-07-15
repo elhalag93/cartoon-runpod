@@ -20,8 +20,8 @@ COPY pyproject.toml ./
 RUN python -m venv /opt/venv
 ENV PATH="/opt/venv/bin:$PATH"
 
-# Install PyTorch with CUDA support for GPU acceleration (ULTRA QUALITY)
-RUN pip install --no-cache-dir torch torchvision torchaudio --index-url https://download.pytorch.org/whl/cu118
+# Install PyTorch with CUDA support - using latest compatible version
+RUN pip install --no-cache-dir torch torchvision torchaudio --index-url https://download.pytorch.org/whl/cu121
 
 # Install other dependencies
 RUN pip install --no-cache-dir \
@@ -41,7 +41,7 @@ RUN pip install --no-cache-dir \
     requests>=2.31.0
 
 # Stage 2: Runtime image with CUDA support
-FROM nvidia/cuda:11.8-runtime-ubuntu22.04
+FROM nvidia/cuda:12.1.0-runtime-ubuntu22.04
 
 # Install Python and minimal system dependencies
 RUN apt-get update && apt-get install -y --no-install-recommends \

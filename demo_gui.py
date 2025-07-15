@@ -247,7 +247,7 @@ def create_demo_interface():
                         
                         anim_seed = gr.Number(
                             label="🎲 Seed (Reproducibility)",
-                            placeholder="Leave empty for random, or enter number like 42",
+                            info="Leave empty for random, or enter number like 42",
                             precision=0
                         )
                         
@@ -287,7 +287,7 @@ def create_demo_interface():
                         
                         tts_seed = gr.Number(
                             label="🎲 Seed (Voice Consistency)",
-                            placeholder="Leave empty for random",
+                            info="Leave empty for random",
                             precision=0
                         )
                         
@@ -349,7 +349,7 @@ def create_demo_interface():
                         
                         comb_seed = gr.Number(
                             label="🎲 Seed (Full Reproducibility)",
-                            placeholder="Same seed = identical results",
+                            info="Same seed = identical results",
                             precision=0
                         )
                         
