@@ -1,7 +1,7 @@
 {
-  "name": "Cartoon Animation Worker - Multi-Character Support v3.0",
-  "description": "Generate MULTI-CHARACTER 1024x1024 cartoon animations with both Temo and Felfel characters in the same scene using Dia TTS and full SDXL AnimateDiff - Docker Optimized",
-  "version": "3.0.1",
+  "name": "Cartoon Animation Worker - Multi-Character Support v4.0",
+  "description": "Generate MULTI-CHARACTER 1024x1024 cartoon animations with both Temo and Felfel characters - Production-Ready v4.0 with Fixed Docker Build and Full Gradio Compatibility",
+  "version": "4.0.0",
   "category": "AI/ML",
   "tags": [
     "animation",
