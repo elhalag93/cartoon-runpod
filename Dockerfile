@@ -37,8 +37,8 @@ RUN pip install --no-cache-dir \
     soundfile>=0.13.1 \
     pydantic>=2.11.3 \
     safetensors>=0.5.3 \
-    requests>=2.31.0
-
+    requests>=2.31.0   \
+    gdown>=4.6.0
 # Create necessary directories
 RUN mkdir -p /workspace/models/sdxl-turbo \
     /workspace/models/animatediff/motion_adapter \
@@ -62,7 +62,8 @@ ENV RUNPOD_DISABLE=true
 ENV LOCAL_DEVELOPMENT=true
 
 # Download models (will use environment variables if set)
-RUN python download_models.py || echo "Model download deferred - will download at runtime"
+#RUN python download_models.py || echo "Model download deferred - will download at runtime"
+RUN python download_models.py
 
 # CRITICAL: Completely disable RunPod aiapi service to prevent connection errors
 RUN echo '#!/bin/bash\necho "🚫 RunPod aiapi disabled in standalone mode"\nexit 0' > /bin/aiapi && chmod +x /bin/aiapi
@@ -73,4 +74,4 @@ RUN systemctl disable runpod 2>/dev/null || true
 RUN systemctl mask runpod 2>/dev/null || true
 
 # Default command - use standalone mode to prevent RunPod connections
-CMD ["python", "-u", "start_standalone.py"]
+CMD ["python","src/start_standalone.py"]
