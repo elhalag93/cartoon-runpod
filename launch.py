@@ -8,11 +8,26 @@ import argparse
 import sys
 import subprocess
 import os
+import signal
+import time
 from pathlib import Path
+
+def kill_runpod_processes():
+    """Kill any existing RunPod processes"""
+    try:
+        subprocess.run(["pkill", "-f", "aiapi"], stderr=subprocess.DEVNULL)
+        subprocess.run(["pkill", "-f", "runpod"], stderr=subprocess.DEVNULL)
+        time.sleep(1)
+        print("🔪 Terminated any existing RunPod processes")
+    except Exception:
+        pass
 
 def launch_web_interface(host="0.0.0.0", port=7860, share=False, debug=False):
     """Launch the Gradio web interface"""
     print("🚀 Starting Cartoon Animation Web Interface...")
+    
+    # Kill any RunPod processes first
+    kill_runpod_processes()
     
     # Set environment variable to prevent RunPod connections
     env = os.environ.copy()
@@ -43,6 +58,9 @@ def launch_api_server(host="0.0.0.0", port=8000, reload=False):
     """Launch the FastAPI server"""
     print("🚀 Starting Cartoon Animation API Server...")
     
+    # Kill any RunPod processes first
+    kill_runpod_processes()
+    
     # Set environment variable to prevent RunPod connections
     env = os.environ.copy()
     env["RUNPOD_STANDALONE_MODE"] = "true"
@@ -69,6 +87,9 @@ def launch_api_server(host="0.0.0.0", port=8000, reload=False):
 def launch_standalone_worker():
     """Launch the worker in standalone mode (no RunPod connections)"""
     print("🚀 Starting Cartoon Animation Worker in Standalone Mode...")
+    
+    # Kill any RunPod processes first
+    kill_runpod_processes()
     
     # Set environment variable to prevent RunPod connections
     env = os.environ.copy()

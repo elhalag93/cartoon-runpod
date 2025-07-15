@@ -88,5 +88,13 @@ ENV LOCAL_DEVELOPMENT=true
 # Download models (will use environment variables if set)
 RUN python download_models.py || echo "Model download deferred - will download at runtime"
 
+# CRITICAL: Completely disable RunPod aiapi service to prevent connection errors
+RUN echo '#!/bin/bash\necho "🚫 RunPod aiapi disabled in standalone mode"\nexit 0' > /bin/aiapi && chmod +x /bin/aiapi
+RUN echo '#!/bin/bash\necho "🚫 RunPod service disabled in standalone mode"\nexit 0' > /usr/local/bin/runpod && chmod +x /usr/local/bin/runpod || true
+
+# Disable any RunPod system services
+RUN systemctl disable runpod 2>/dev/null || true
+RUN systemctl mask runpod 2>/dev/null || true
+
 # Default command - use standalone mode to prevent RunPod connections
 CMD ["python", "-u", "start_standalone.py"]
