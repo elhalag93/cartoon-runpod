@@ -57,7 +57,7 @@ jobs:
         pip install --no-cache-dir "numpy>=1.24.0,<2.0.0"
         
         # Install PyTorch with CUDA support for GPU acceleration
-        pip install --no-cache-dir torch==2.1.0+cu118 torchvision==0.16.0+cu118 torchaudio==2.1.0+cu118 --index-url https://download.pytorch.org/whl/cu118
+        pip install --no-cache-dir torch torchvision torchaudio --index-url https://download.pytorch.org/whl/cu118
         
         # Install core ML libraries
         pip install --no-cache-dir transformers>=4.35.0
