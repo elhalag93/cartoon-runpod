@@ -20,8 +20,8 @@ COPY pyproject.toml ./
 RUN python -m venv /opt/venv
 ENV PATH="/opt/venv/bin:$PATH"
 
-# Install PyTorch CPU-only first (much smaller)
-RUN pip install --no-cache-dir torch==2.6.0+cpu torchvision torchaudio --index-url https://download.pytorch.org/whl/cpu
+# Install PyTorch with CUDA support for GPU acceleration (ULTRA QUALITY)
+RUN pip install --no-cache-dir torch==2.1.0+cu118 torchvision==0.16.0+cu118 torchaudio==2.1.0+cu118 --index-url https://download.pytorch.org/whl/cu118
 
 # Install other dependencies
 RUN pip install --no-cache-dir \
@@ -40,13 +40,17 @@ RUN pip install --no-cache-dir \
     safetensors>=0.5.3 \
     requests>=2.31.0
 
-# Stage 2: Runtime image
-FROM python:3.10-slim
+# Stage 2: Runtime image with CUDA support
+FROM nvidia/cuda:11.8-runtime-ubuntu22.04
 
-# Install minimal system dependencies
+# Install Python and minimal system dependencies
 RUN apt-get update && apt-get install -y --no-install-recommends \
+    python3.10 \
+    python3.10-dev \
+    python3-pip \
     git \
     curl \
+    && ln -s /usr/bin/python3.10 /usr/bin/python \
     && rm -rf /var/lib/apt/lists/*
 
 # Copy virtual environment from builder

@@ -1,6 +1,6 @@
 [project]
 name = "cartoon-animation-worker"
-version = "3.0.0"
+version = "3.0.1"
 description = "RunPod worker for generating cartoon character animations with voice using Dia TTS and AnimateDiff - Multi-Character Support with Docker Optimization"
 readme = "README.md"
 requires-python = ">=3.10"

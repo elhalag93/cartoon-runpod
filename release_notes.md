@@ -1,6 +1,12 @@
-# 🐳 Cartoon Animation Worker v3.0.0 - Docker Optimization & Build Revolution
+# 🐳 Cartoon Animation Worker v3.0.1 - Docker Optimization & GPU Ultra Quality
 
 ## 🚀 **MAJOR NEW FEATURES**
+
+### 🎮 **GPU Ultra Quality Support** (v3.0.1)
+- **CUDA-enabled PyTorch**: Full GPU acceleration for ultra-quality generation
+- **NVIDIA runtime**: Optimized Docker image with CUDA 11.8 support
+- **1024x1024 generation**: True ultra-quality with GPU acceleration
+- **Multi-character GPU blending**: Fast LoRA weight switching on GPU
 
 ### 🐳 **Docker Build Optimization**
 - **Multi-stage Dockerfile**: Reduced build size from ~15GB to ~5GB
