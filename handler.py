@@ -14,12 +14,19 @@ import traceback
 from typing import Dict, Any, Optional, Union, List
 from pathlib import Path
 
-try:
-    import runpod
-    from runpod.serverless.utils import rp_cleanup
-except ImportError:
-    print("⚠️ RunPod module not available - this is expected in local development")
-    runpod = None
+# Only import RunPod in production mode (not standalone)
+runpod = None
+rp_cleanup = None
+if not (os.getenv("RUNPOD_STANDALONE_MODE") == "true" or os.getenv("STANDALONE_WORKER") == "true"):
+    try:
+        import runpod
+        from runpod.serverless.utils import rp_cleanup
+    except ImportError:
+        print("⚠️ RunPod module not available - this is expected in local development")
+        runpod = None
+        rp_cleanup = None
+else:
+    print("🔧 RunPod imports disabled - running in standalone mode")
 
 import torch
 import numpy as np
@@ -404,7 +411,7 @@ def _save_and_upload_files(result, job_id):
             response["audio"] = f"data:audio/wav;base64,{audio_data}"
     
     # Cleanup
-    if runpod:
+    if runpod and rp_cleanup:
         rp_cleanup.clean([job_dir])
     
     return response
@@ -799,8 +806,11 @@ def generate_cartoon(job):
 
 # RunPod serverless entry point (following working example exactly)
 if __name__ == "__main__":
-    print("🚀 Starting RunPod Cartoon Animation Worker...")
+    print("🚀 Starting Cartoon Animation Worker...")
     print(f"🔧 PyTorch: {torch.__version__}")
+    
+    # Check if running in standalone mode (no RunPod connections)
+    standalone_mode = os.getenv("RUNPOD_STANDALONE_MODE") == "true" or os.getenv("STANDALONE_WORKER") == "true"
     
     # CRITICAL: Verify GPU is available
     if torch.cuda.is_available():
@@ -810,15 +820,22 @@ if __name__ == "__main__":
         print("✅ GPU DETECTED - FAST GENERATION ENABLED")
     else:
         print("🚨 WARNING: NO GPU DETECTED - THIS WILL BE EXTREMELY SLOW!")
-        print("🚨 Make sure you're running on RunPod with GPU enabled!")
+        if not standalone_mode:
+            print("🚨 Make sure you're running on RunPod with GPU enabled!")
     
     # Initialize directories
     setup_directories()
     
-    # Start RunPod serverless worker
-    if runpod is not None:
-        print("🎬 Starting RunPod serverless handler...")
-        runpod.serverless.start({"handler": generate_cartoon})
+    if standalone_mode:
+        print("🔧 Running in STANDALONE MODE - No RunPod connections")
+        print("✅ Handler function is ready for local use")
+        print("💡 Use python launch.py web/api for interfaces")
+        print("💡 Models will be loaded on first use")
     else:
-        print("⚠️ RunPod module not available - running in development mode")
-        print("✅ Handler function is ready for RunPod deployment") 
+        # Start RunPod serverless worker (only in production mode)
+        if runpod is not None:
+            print("🎬 Starting RunPod serverless handler...")
+            runpod.serverless.start({"handler": generate_cartoon})
+        else:
+            print("⚠️ RunPod module not available - running in development mode")
+            print("✅ Handler function is ready for RunPod deployment") 

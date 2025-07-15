@@ -30,11 +30,16 @@ import traceback
 from typing import Dict, Any, Optional, Union, List
 from pathlib import Path
 
-try:
-    import runpod  # Required for RunPod deployment
-except ImportError:
-    # Allow import in CI/testing environments where runpod module may not be available
-    runpod = None
+# Only import RunPod in production mode (not standalone)
+runpod = None
+if not (os.getenv("RUNPOD_STANDALONE_MODE") == "true" or os.getenv("STANDALONE_WORKER") == "true"):
+    try:
+        import runpod  # Required for RunPod deployment
+    except ImportError:
+        # Allow import in CI/testing environments where runpod module may not be available
+        runpod = None
+else:
+    print("🔧 RunPod imports disabled - running in standalone mode")
 import torch
 import numpy as np
 import soundfile as sf
@@ -554,16 +559,28 @@ def handler(job):
 
 # RunPod serverless entry point
 if __name__ == "__main__":
-    print("🚀 Starting RunPod Cartoon Animation Worker...")
+    # Check if running in standalone mode (no RunPod connections)
+    standalone_mode = os.getenv("RUNPOD_STANDALONE_MODE") == "true" or os.getenv("STANDALONE_WORKER") == "true"
+    
+    if standalone_mode:
+        print("🚀 Starting Cartoon Animation Worker (Standalone Mode)")
+    else:
+        print("🚀 Starting RunPod Cartoon Animation Worker...")
+    
     print(f"📱 Device: {'CUDA' if torch.cuda.is_available() else 'CPU'}")
     print(f"🔧 PyTorch: {torch.__version__}")
     
     # Initialize directories
     setup_directories()
     
-    # Start RunPod serverless worker
-    if runpod is not None:
-        runpod.serverless.start({"handler": handler})  # Required for RunPod
+    if standalone_mode:
+        print("🔧 Running in STANDALONE MODE - No RunPod connections")
+        print("✅ Handler function is ready for local use")
+        print("💡 Use this handler with web interface or API server")
     else:
-        print("⚠️ RunPod module not available - running in test/development mode")
-        print("✅ Handler function is ready for RunPod deployment") 
+        # Start RunPod serverless worker (only in production mode)
+        if runpod is not None:
+            runpod.serverless.start({"handler": handler})  # Required for RunPod
+        else:
+            print("⚠️ RunPod module not available - running in test/development mode")
+            print("✅ Handler function is ready for RunPod deployment") 

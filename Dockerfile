@@ -82,5 +82,5 @@ ENV PORT=7860
 # Download models (will use environment variables if set)
 RUN python download_models.py || echo "Model download deferred - will download at runtime"
 
-# Default command
-CMD ["python", "-u", "handler.py"]
+# Default command - use standalone mode to prevent RunPod connections
+CMD ["python", "-u", "start_standalone.py"]
