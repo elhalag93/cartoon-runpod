@@ -15,9 +15,8 @@ def main():
     # Set environment variables to prevent RunPod connections
     os.environ["RUNPOD_STANDALONE_MODE"] = "true"
     os.environ["STANDALONE_WORKER"] = "true"
-    
-    # Disable any potential RunPod API calls
     os.environ["RUNPOD_DISABLE"] = "true"
+    os.environ["LOCAL_DEVELOPMENT"] = "true"
     
     print("🔧 Environment configured for standalone operation")
     print("🚫 RunPod connections disabled")

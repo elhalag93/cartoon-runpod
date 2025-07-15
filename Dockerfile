@@ -79,6 +79,12 @@ ENV INTERFACE_MODE=web
 ENV HOST=0.0.0.0
 ENV PORT=7860
 
+# Disable RunPod connections in container mode (standalone by default)
+ENV RUNPOD_STANDALONE_MODE=true
+ENV STANDALONE_WORKER=true
+ENV RUNPOD_DISABLE=true
+ENV LOCAL_DEVELOPMENT=true
+
 # Download models (will use environment variables if set)
 RUN python download_models.py || echo "Model download deferred - will download at runtime"
 

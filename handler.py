@@ -17,16 +17,27 @@ from pathlib import Path
 # Only import RunPod in production mode (not standalone)
 runpod = None
 rp_cleanup = None
-if not (os.getenv("RUNPOD_STANDALONE_MODE") == "true" or os.getenv("STANDALONE_WORKER") == "true"):
+
+# Multiple checks to ensure we're not in standalone/local mode
+standalone_mode = (
+    os.getenv("RUNPOD_STANDALONE_MODE") == "true" or 
+    os.getenv("STANDALONE_WORKER") == "true" or
+    os.getenv("RUNPOD_DISABLE") == "true" or
+    os.getenv("LOCAL_DEVELOPMENT") == "true"
+)
+
+if not standalone_mode:
     try:
         import runpod
         from runpod.serverless.utils import rp_cleanup
+        print("🔄 RunPod modules imported for production mode")
     except ImportError:
         print("⚠️ RunPod module not available - this is expected in local development")
         runpod = None
         rp_cleanup = None
 else:
-    print("🔧 RunPod imports disabled - running in standalone mode")
+    print("🔧 RunPod imports completely disabled - running in standalone mode")
+    print("🚫 No RunPod API connections will be made")
 
 import torch
 import numpy as np
@@ -810,7 +821,12 @@ if __name__ == "__main__":
     print(f"🔧 PyTorch: {torch.__version__}")
     
     # Check if running in standalone mode (no RunPod connections)
-    standalone_mode = os.getenv("RUNPOD_STANDALONE_MODE") == "true" or os.getenv("STANDALONE_WORKER") == "true"
+    standalone_mode = (
+        os.getenv("RUNPOD_STANDALONE_MODE") == "true" or 
+        os.getenv("STANDALONE_WORKER") == "true" or
+        os.getenv("RUNPOD_DISABLE") == "true" or
+        os.getenv("LOCAL_DEVELOPMENT") == "true"
+    )
     
     # CRITICAL: Verify GPU is available
     if torch.cuda.is_available():

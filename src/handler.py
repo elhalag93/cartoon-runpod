@@ -32,14 +32,26 @@ from pathlib import Path
 
 # Only import RunPod in production mode (not standalone)
 runpod = None
-if not (os.getenv("RUNPOD_STANDALONE_MODE") == "true" or os.getenv("STANDALONE_WORKER") == "true"):
+
+# Multiple checks to ensure we're not in standalone/local mode
+standalone_mode = (
+    os.getenv("RUNPOD_STANDALONE_MODE") == "true" or 
+    os.getenv("STANDALONE_WORKER") == "true" or
+    os.getenv("RUNPOD_DISABLE") == "true" or
+    os.getenv("LOCAL_DEVELOPMENT") == "true"
+)
+
+if not standalone_mode:
     try:
         import runpod  # Required for RunPod deployment
+        print("🔄 RunPod module imported for production mode")
     except ImportError:
         # Allow import in CI/testing environments where runpod module may not be available
         runpod = None
+        print("⚠️ RunPod module not available - this is expected in local development")
 else:
-    print("🔧 RunPod imports disabled - running in standalone mode")
+    print("🔧 RunPod imports completely disabled - running in standalone mode")
+    print("🚫 No RunPod API connections will be made")
 import torch
 import numpy as np
 import soundfile as sf

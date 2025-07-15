@@ -17,6 +17,9 @@ def launch_web_interface(host="0.0.0.0", port=7860, share=False, debug=False):
     # Set environment variable to prevent RunPod connections
     env = os.environ.copy()
     env["RUNPOD_STANDALONE_MODE"] = "true"
+    env["STANDALONE_WORKER"] = "true"
+    env["RUNPOD_DISABLE"] = "true"
+    env["LOCAL_DEVELOPMENT"] = "true"
     
     cmd = [
         sys.executable, "web_interface.py",
@@ -43,6 +46,9 @@ def launch_api_server(host="0.0.0.0", port=8000, reload=False):
     # Set environment variable to prevent RunPod connections
     env = os.environ.copy()
     env["RUNPOD_STANDALONE_MODE"] = "true"
+    env["STANDALONE_WORKER"] = "true"
+    env["RUNPOD_DISABLE"] = "true"
+    env["LOCAL_DEVELOPMENT"] = "true"
     
     cmd = [
         sys.executable, "api_server.py",
@@ -68,11 +74,15 @@ def launch_standalone_worker():
     env = os.environ.copy()
     env["RUNPOD_STANDALONE_MODE"] = "true"
     env["STANDALONE_WORKER"] = "true"
+    env["RUNPOD_DISABLE"] = "true"
+    env["LOCAL_DEVELOPMENT"] = "true"
     
     cmd = [sys.executable, "-c", """
 import os
 os.environ["RUNPOD_STANDALONE_MODE"] = "true"
 os.environ["STANDALONE_WORKER"] = "true"
+os.environ["RUNPOD_DISABLE"] = "true"
+os.environ["LOCAL_DEVELOPMENT"] = "true"
 
 from handler import MODELS, generate_cartoon, setup_directories
 import json
