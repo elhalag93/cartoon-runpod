@@ -41,7 +41,7 @@ RUN pip install --no-cache-dir \
     requests>=2.31.0
 
 # Stage 2: Runtime image with CUDA support
-FROM nvidia/cuda:11.8-runtime-ubuntu22.04
+FROM nvidia/cuda:11.8-cudnn8-runtime-ubuntu22.04
 
 # Install Python and minimal system dependencies
 RUN apt-get update && apt-get install -y --no-install-recommends \

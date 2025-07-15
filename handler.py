@@ -225,10 +225,9 @@ class ModelHandler:
         # VERIFY GPU IS AVAILABLE FIRST
         gpu_available = verify_gpu_setup()
         
-        # In CI/testing environment, skip actual model loading
+        # Skip model loading only in CI to save time and resources
         if os.getenv("CI") or os.getenv("GITHUB_ACTIONS"):
-            print("⚠️ CI/Testing environment detected - skipping model loading")
-            print("✅ Handler validation passed - ready for production deployment")
+            print("⚠️ CI environment detected - skipping model loading (models will load in production)")
             return
         
         print("🚀 Loading models on GPU for maximum performance...")
@@ -611,24 +610,8 @@ def generate_cartoon(job):
         # Setup directories
         setup_directories()
         
-        # In CI/testing environment, return mock success response
-        if os.getenv("CI") or os.getenv("GITHUB_ACTIONS"):
-            print("⚠️ CI/Testing environment detected - returning mock response")
-            print("✅ Handler can process input and validate parameters successfully")
-            
-            # Extract basic info from input for validation
-            job_input = job.get("input", {})
-            task_type = job_input.get("task_type", "unknown")
-            
-            return {
-                "task_type": task_type,
-                "message": "Handler validation successful - ready for production deployment",
-                "generation_time": round(time.time() - start_time, 2),
-                "memory_usage": get_memory_usage(),
-                "validated_input": True,
-                "ci_test": True,
-                "status": "success"
-            }
+        # Only skip model loading in CI, not the entire generation process
+        # This ensures the handler works properly in production
         
         # Extract input following working example pattern
         job_input = job["input"]
