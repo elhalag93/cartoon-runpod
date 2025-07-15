@@ -1,4 +1,4 @@
-# Cartoon Animation Worker v6.0.2
+# Cartoon Animation Worker v6.0.4
 
 ## 🎬 Features
 - Generate cartoon character animations using AnimateDiff + SDXL Turbo
@@ -13,7 +13,7 @@
 ### RunPod Deployment
 ```bash
 # Use this Docker image on RunPod:
-your-dockerhub-username/cartoon-animation:6.0.2
+your-dockerhub-username/cartoon-animation:6.0.4
 
 # Set container command to:
 python src/handler.py  # For worker mode
@@ -23,7 +23,7 @@ python launch.py api   # For API server
 
 ### Local Docker
 ```bash
-docker run -p 7860:7860 --gpus all your-dockerhub-username/cartoon-animation:6.0.2 web
+docker run -p 7860:7860 --gpus all your-dockerhub-username/cartoon-animation:6.0.4 web
 ```
 
 ## 📋 Input Format
