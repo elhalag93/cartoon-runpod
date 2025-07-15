@@ -17,8 +17,8 @@ WORKDIR /workspace
 COPY pyproject.toml ./
 
 # Install Python dependencies in a virtual environment
-RUN python -m venv /opt/venv
-ENV PATH="/opt/venv/bin:$PATH"
+#RUN python -m venv /opt/venv
+#ENV PATH="/opt/venv/bin:$PATH"
 
 # Install PyTorch with CUDA support - using latest compatible version
 RUN pip install --no-cache-dir torch torchvision torchaudio --index-url https://download.pytorch.org/whl/cu121
