@@ -47,10 +47,10 @@ else:
     OUTPUT_DIR = Path("/workspace/outputs")
     TEMP_DIR = Path("/workspace/temp")
 
-# Model configuration - HIGHEST QUALITY MODELS
+# Model configuration - COMPATIBLE MODELS FOR SDXL
 DIA_MODEL_CHECKPOINT = "nari-labs/Dia-1.6B-0626"  # Keep the best TTS model
 SDXL_MODEL_ID = "stabilityai/stable-diffusion-xl-base-1.0"  # Full SDXL for maximum quality
-MOTION_ADAPTER_ID = "guoyww/animatediff-motion-adapter-v1-5-2"  # Stable non-beta version
+MOTION_ADAPTER_ID = "guoyww/animatediff-motion-adapter-sdxl-beta"  # SDXL-specific motion adapter
 CONTROLNET_MODEL_ID = "diffusers/controlnet-openpose-sdxl-1.0"  # For better character consistency
 
 # ULTRA HIGH QUALITY Generation Settings - 1024x1024
@@ -160,20 +160,20 @@ class ModelHandler:
         return self.dia_model, self.dia_processor
     
     def load_animation_pipeline(self):
-        """Load HIGH QUALITY AnimateDiff pipeline with full SDXL"""
+        """Load HIGH QUALITY AnimateDiff pipeline with SDXL compatibility"""
         print("🔄 Loading HIGH QUALITY AnimateDiff pipeline...")
         device = "cuda" if torch.cuda.is_available() else "cpu"
         
         try:
-            # Load motion adapter (stable version)
-            print("📥 Loading stable motion adapter...")
+            # Try SDXL-specific motion adapter first
+            print("📥 Loading SDXL-compatible motion adapter...")
             self.motion_adapter = MotionAdapter.from_pretrained(
                 MOTION_ADAPTER_ID,
                 torch_dtype=torch.float16 if device == "cuda" else torch.float32
             )
             
             # Load FULL SDXL AnimateDiff pipeline for maximum quality
-            print("🔄 Creating HIGH QUALITY AnimateDiff pipeline with full SDXL...")
+            print("🔄 Creating HIGH QUALITY AnimateDiff pipeline with SDXL...")
             self.animation_pipeline = AnimateDiffSDXLPipeline.from_pretrained(
                 SDXL_MODEL_ID,
                 motion_adapter=self.motion_adapter,
@@ -215,8 +215,53 @@ class ModelHandler:
             
             print("✅ HIGH QUALITY AnimateDiff pipeline loaded successfully")
         except Exception as e:
-            print(f"❌ Error loading animation pipeline: {e}")
-            raise
+            print(f"❌ Error loading SDXL animation pipeline: {e}")
+            print("🔄 Falling back to SD1.5 AnimateDiff pipeline for compatibility...")
+            
+            try:
+                # Fallback to SD1.5 AnimateDiff (more compatible)
+                from diffusers import AnimateDiffPipeline
+                
+                print("📥 Loading SD1.5-compatible motion adapter...")
+                self.motion_adapter = MotionAdapter.from_pretrained(
+                    "guoyww/animatediff-motion-adapter-v1-5-2",  # SD1.5 compatible
+                    torch_dtype=torch.float16 if device == "cuda" else torch.float32
+                )
+                
+                print("🔄 Creating SD1.5 AnimateDiff pipeline...")
+                self.animation_pipeline = AnimateDiffPipeline.from_pretrained(
+                    "runwayml/stable-diffusion-v1-5",  # SD1.5 base
+                    motion_adapter=self.motion_adapter,
+                    torch_dtype=torch.float16 if device == "cuda" else torch.float32,
+                    use_safetensors=True
+                ).to(device)
+                
+                # Configure scheduler
+                self.animation_pipeline.scheduler = DDIMScheduler.from_config(
+                    self.animation_pipeline.scheduler.config,
+                    beta_schedule="scaled_linear",
+                    steps_offset=1,
+                    clip_sample=False,
+                    set_alpha_to_one=False,
+                    skip_prk_steps=True
+                )
+                
+                # Apply optimizations
+                if device == "cuda":
+                    try:
+                        self.animation_pipeline.enable_xformers_memory_efficient_attention()
+                        print("✅ xFormers enabled for SD1.5")
+                    except Exception:
+                        print("⚠️ xFormers not available")
+                    
+                    self.animation_pipeline.enable_vae_slicing()
+                    self.animation_pipeline.enable_vae_tiling()
+                
+                print("✅ SD1.5 AnimateDiff pipeline loaded successfully (fallback)")
+                
+            except Exception as fallback_error:
+                print(f"❌ Error with fallback pipeline: {fallback_error}")
+                raise fallback_error
         
         return self.animation_pipeline
     
@@ -545,12 +590,12 @@ def generate_animation(
             "mock_output": True
         }
     
+    # Format characters for processing
+    chars_list = [characters] if isinstance(characters, str) else characters
+    chars_display = characters if isinstance(characters, str) else "_".join(characters)
+    
     # Load character LoRA weights (single or multiple)
     lora_weights = load_lora_weights(MODELS.animation_pipeline, characters)
-    
-    # Format characters for display
-    chars_display = characters if isinstance(characters, str) else "_".join(characters)
-    chars_list = [characters] if isinstance(characters, str) else characters
     
     print(f"🎬 Generating animation for {chars_display}: {prompt[:50]}...")
     
