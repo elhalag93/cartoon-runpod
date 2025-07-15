@@ -1,6 +1,6 @@
 name: cartoon-animation-worker-multi-character
-description: "Generate MULTI-CHARACTER 1024x1024 cartoon animations with both Temo and Felfel - ULTIMATE QUALITY v5.0 with Perfect Multi-Character Support"
-version: "5.0.0"
+description: "Generate MULTI-CHARACTER 1024x1024 cartoon animations with both Temo and Felfel - NEXT-GEN v6.0 with Production-Ready Multi-Character Support"
+version: "6.0.0"
 
 runtime:
   python_version: "3.10"
